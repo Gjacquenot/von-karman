@@ -177,6 +177,10 @@ void Semilag2(double* u, double* v, double* q, double* q0_aux, double* aux, Prm 
   Semilag(u, v, q, aux, prm, 1);
 }
 
+int try() {
+  return 1;
+}
+
 int main(void) {
   Prm prm;
   prm.NX = 102;
