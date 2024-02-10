@@ -178,7 +178,7 @@ void Semilag2(double* u, double* v, double* q, double* q0_aux, double* aux, Prm 
 }
 
 int try() {
-  return 1;
+  return 2;
 }
 
 int main(void) {
