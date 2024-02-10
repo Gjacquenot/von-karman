@@ -6,6 +6,7 @@
 
 #define U(i, j) u[(i) * prm.NY + (j)]
 #define V(i, j) v[(i) * prm.NY + (j)]
+#define P(i, j) p[(i) * prm.NY + (j)]
 #define x(i) (-0.5 * prm.dx + (i) * prm.dx)
 #define y(j) (-0.5 * prm.dy + (j) * prm.dy)
 
@@ -24,70 +25,11 @@ typedef struct prm {
   double dt;
   double dx;
   double dy;
+  double U;
+  double L;
+  double nu;
   double Re;
 } Prm;
-
-// 1st order semi-Lagrangian advection
-void Semilag(double* u, double* v, double* q, double* aux, Prm prm, int sign) {
-  int sign_u, sign_v;
-  double a, b;
-  for (int i = 1; i < prm.NX - 1; i++) {
-    for (int j = 1; j < prm.NY - 1; j++) {
-      // if (U(i, j) > 0) {
-      //   a = 1 - U(i, j) * prm.dt / prm.dx;
-      //   if (V(i, j) > 0) {
-      //     b = 1 - V(i, j) * prm.dt / prm.dy;
-      //     C00 = a * b * q[i * prm.NY + j];
-      //     C01 = a * (1 - b) * q[i * prm.NY + j - 1];
-      //     C10 = (1 - a) * b * q[(i - 1) * prm.NY + j];
-      //     C11 = (1 - a) * (1 - b) * q[(i - 1) * prm.NY + j - 1];
-      //   } else {
-      //     b = 1 + V(i, j) * prm.dt / prm.dy;
-      //     C00 = a * b * q[i * prm.NY + j];
-      //     C01 = a * (1 - b) * q[i * prm.NY + j + 1];
-      //     C10 = (1 - a) * b * q[(i - 1) * prm.NY + j];
-      //     C11 = (1 - a) * (1 - b) * q[(i - 1) * prm.NY + j + 1];
-      //   }
-      // } else {
-      //   a = 1 + U(i, j) * prm.dt / prm.dx;
-      //   if (V(i, j) > 0) {
-      //     b = 1 - V(i, j) * prm.dt / prm.dy;
-      //     C00 = a * b * q[i * prm.NY + j];
-      //     C01 = a * (1 - b) * q[i * prm.NY + j - 1];
-      //     C10 = (1 - a) * b * q[(i + 1) * prm.NY + j];
-      //     C11 = (1 - a) * (1 - b) * q[(i + 1) * prm.NY + j - 1];
-      //   } else {
-      //     b = 1 + V(i, j) * prm.dt / prm.dy;
-      //     C00 = a * b * q[i * prm.NY + j];
-      //     C01 = a * (1 - b) * q[i * prm.NY + j + 1];
-      //     C10 = (1 - a) * b * q[(i + 1) * prm.NY + j];
-      //     C11 = (1 - a) * (1 - b) * q[(i + 1) * prm.NY + j + 1];
-      //   }
-      // }
-      // ADVq[i * prm.NY + j] = C00 + C01 + C10 + C11;
-
-      if (sign * U(i, j) > 0) {
-        a = 1 - sign * U(i, j) * prm.dt / prm.dx;
-        sign_u = 1;
-      } else {
-        a = 1 + sign * U(i, j) * prm.dt / prm.dx;
-        sign_u = -1;
-      }
-      if (sign * V(i, j) > 0) {
-        b = 1 - sign * V(i, j) * prm.dt / prm.dy;
-        sign_v = 1;
-      } else {
-        b = 1 + sign * V(i, j) * prm.dt / prm.dy;
-        sign_v = -1;
-      }
-      aux[i * prm.NY + j] = a * b * q[i * prm.NY + j] +
-                            (1 - a) * b * q[(i - sign_u) * prm.NY + j] +
-                            a * (1 - b) * q[i * prm.NY + j - sign_v] +
-                            (1 - a) * (1 - b) * q[(i - sign_u) * prm.NY + j - sign_v];
-    }
-  }
-  memcpy(q, aux, prm.NX * prm.NY * sizeof(double));
-}
 
 // void Semilag_slow(double* u, double* v, double* q, Prm prm, int sign) {
 //   double x, y, x0, y0;
@@ -167,82 +109,158 @@ void Semilag(double* u, double* v, double* q, double* aux, Prm prm, int sign) {
 //   // free(ADVq);
 // }
 
-// 2nd order semi-Lagrangian advection
-void Semilag2(double* u, double* v, double* q, double* q0_aux, double* aux, Prm prm) {
-  memcpy(q0_aux, q, prm.NX * prm.NY * sizeof(double));
-  Semilag(u, v, q, aux, prm, 1);
-  Semilag(u, v, q, aux, prm, -1);
-  for (int i = 0; i < prm.NX * prm.NY; i++)
-    q[i] = q0_aux[i] + (q0_aux[i] - q[i]) / 2;
-  Semilag(u, v, q, aux, prm, 1);
+// 1st order semi-Lagrangian advection
+void Semilag(double* u, double* v, double* q, Prm prm, int sign) {
+  int sign_u, sign_v;
+  double a, b;
+  double* aux = (double*)malloc(prm.NX * prm.NY * sizeof(double));
+  for (int i = 1; i < prm.NX - 1; i++) {
+    for (int j = 1; j < prm.NY - 1; j++) {
+      // if (U(i, j) > 0) {
+      //   a = 1 - U(i, j) * prm.dt / prm.dx;
+      //   if (V(i, j) > 0) {
+      //     b = 1 - V(i, j) * prm.dt / prm.dy;
+      //     C00 = a * b * q[i * prm.NY + j];
+      //     C01 = a * (1 - b) * q[i * prm.NY + j - 1];
+      //     C10 = (1 - a) * b * q[(i - 1) * prm.NY + j];
+      //     C11 = (1 - a) * (1 - b) * q[(i - 1) * prm.NY + j - 1];
+      //   } else {
+      //     b = 1 + V(i, j) * prm.dt / prm.dy;
+      //     C00 = a * b * q[i * prm.NY + j];
+      //     C01 = a * (1 - b) * q[i * prm.NY + j + 1];
+      //     C10 = (1 - a) * b * q[(i - 1) * prm.NY + j];
+      //     C11 = (1 - a) * (1 - b) * q[(i - 1) * prm.NY + j + 1];
+      //   }
+      // } else {
+      //   a = 1 + U(i, j) * prm.dt / prm.dx;
+      //   if (V(i, j) > 0) {
+      //     b = 1 - V(i, j) * prm.dt / prm.dy;
+      //     C00 = a * b * q[i * prm.NY + j];
+      //     C01 = a * (1 - b) * q[i * prm.NY + j - 1];
+      //     C10 = (1 - a) * b * q[(i + 1) * prm.NY + j];
+      //     C11 = (1 - a) * (1 - b) * q[(i + 1) * prm.NY + j - 1];
+      //   } else {
+      //     b = 1 + V(i, j) * prm.dt / prm.dy;
+      //     C00 = a * b * q[i * prm.NY + j];
+      //     C01 = a * (1 - b) * q[i * prm.NY + j + 1];
+      //     C10 = (1 - a) * b * q[(i + 1) * prm.NY + j];
+      //     C11 = (1 - a) * (1 - b) * q[(i + 1) * prm.NY + j + 1];
+      //   }
+      // }
+      // ADVq[i * prm.NY + j] = C00 + C01 + C10 + C11;
+
+      if (sign * U(i, j) > 0) {
+        a = 1 - sign * U(i, j) * prm.dt / prm.dx;
+        sign_u = 1;
+      } else {
+        a = 1 + sign * U(i, j) * prm.dt / prm.dx;
+        sign_u = -1;
+      }
+      if (sign * V(i, j) > 0) {
+        b = 1 - sign * V(i, j) * prm.dt / prm.dy;
+        sign_v = 1;
+      } else {
+        b = 1 + sign * V(i, j) * prm.dt / prm.dy;
+        sign_v = -1;
+      }
+      aux[i * prm.NY + j] = a * b * q[i * prm.NY + j] +
+                            (1 - a) * b * q[(i - sign_u) * prm.NY + j] +
+                            a * (1 - b) * q[i * prm.NY + j - sign_v] +
+                            (1 - a) * (1 - b) * q[(i - sign_u) * prm.NY + j - sign_v];
+    }
+  }
+  memcpy(q, aux, prm.NX * prm.NY * sizeof(double));
+  free(aux);
 }
 
-int try() {
-  return 2;
+// 2nd order semi-Lagrangian advection
+void Semilag2(double* u, double* v, double* q, Prm prm) {
+  double* q0 = (double*)malloc(prm.NX * prm.NY * sizeof(double));
+  memcpy(q0, q, prm.NX * prm.NY * sizeof(double));
+  Semilag(u, v, q, prm, 1);
+  Semilag(u, v, q, prm, -1);
+  for (int i = 0; i < prm.NX * prm.NY; i++)
+    q[i] = q0[i] + (q0[i] - q[i]) / 2;
+  Semilag(u, v, q, prm, 1);
+}
+
+void init(Prm* prm) {
+  prm->NX = 100;                        // total grid points (including ghost points)
+  prm->NY = 100;                        // total grid points (including ghost points)
+  prm->nx = prm->NX - 2;                // real grid points
+  prm->ny = prm->NY - 2;                // real grid points
+  prm->LX = 10.0;                       // Length of domain (x direction)
+  prm->LY = 5.0;                        // Length of domain (y direction)
+  prm->dx = prm->LX / prm->nx;          // grid spacing (x direction)
+  prm->dy = prm->LY / prm->ny;          // grid spacing (y direction)
+  prm->dt = 0.001;                      // time step
+  prm->U = 1.0;                         // enterning speed
+  prm->L = 1.0;                         // characteristic length of the object
+  prm->nu = 1.51e-5;                    // kinematic viscosity of air at atmospheric conditions
+  prm->Re = prm->U * prm->L / prm->nu;  // Reynolds number
+}
+
+// we set the boundary conditions using the ghost points and linear interpolation
+void boundary_conditions(double* u, double* v, double* p, Prm prm) {
+  for (int j = 1; j < prm.NY - 1; j++) {
+    // left boundary: u = U, v = 0, \partial_x p = 0
+    U(0, j) = 2 * prm.U - U(1, j);
+    V(0, j) = -V(1, j);
+    P(0, j) = P(1, j);
+    // right boundary: \partial_x u = 0, \partial_x v = 0, p = 0
+    U(prm.NX - 1, j) = U(prm.NX - 2, j);
+    V(prm.NX - 1, j) = V(prm.NX - 2, j);
+    P(prm.NX - 1, j) = -P(prm.NX - 2, j);
+  }
+  for (int i = 1; i < prm.NX - 1; i++) {
+    // bottom boundary: \partial_y u = 0, v = 0, \partial_y p = 0
+    U(i, 0) = U(i, 1);
+    V(i, 0) = -V(i, 1);
+    P(i, 0) = P(i, 1);
+    // top boundary: \partial_y u = 0, v = 0, \partial_y p = 0
+    U(i, prm.NY - 1) = U(i, prm.NY - 2);
+    V(i, prm.NY - 1) = -V(i, prm.NY - 2);
+    P(i, prm.NY - 1) = P(i, prm.NY - 2);
+  }
 }
 
 int main(void) {
   Prm prm;
-  prm.NX = 102;
-  prm.NY = 100;
-  prm.nx = prm.NX - 2;
-  prm.ny = prm.NY - 2;
-  prm.LX = 1.0;
-  double aspect_ratio = 1.0;
-  prm.LY = prm.LX / aspect_ratio;
-  prm.dx = prm.LX / prm.nx;
-  prm.dy = prm.LY / prm.ny;
-  prm.dt = 0.001;
-  prm.Re = 100.0;
+  init(&prm);
+
   double t = 0.0;
-  // printf("dx = %lf, dy = %lf\n", prm.dx, prm.dy);
-  // Allocate arrays
-  double* u = (double*)calloc(prm.NX * prm.NY, sizeof(double));
-  double* v = (double*)calloc(prm.NX * prm.NY, sizeof(double));
-  double* aux = (double*)calloc(prm.NX * prm.NY, sizeof(double));
-  double* q = (double*)calloc(prm.NX * prm.NY, sizeof(double));
-  double* q_mine = (double*)calloc(prm.NX * prm.NY, sizeof(double));
-  double* q0 = malloc(prm.NX * prm.NY * sizeof(double));
-  double* ADVq = (double*)calloc(prm.NX * prm.NY, sizeof(double));
-  double r, alpha = 0.2, X0 = 0.5, Y0 = 0.75;
 
-  for (int i = 1; i < prm.NX - 1; i++) {
-    for (int j = 1; j < prm.NY - 1; j++) {
-      U(i, j) = sin(PI * x(i)) * sin(PI * x(i)) * sin(2 * PI * y(j));
-      V(i, j) = -sin(2 * PI * x(i)) * sin(PI * y(j)) * sin(PI * y(j));
-      r = sqrt((x(i) - X0) * (x(i) - X0) + (y(j) - Y0) * (y(j) - Y0));
-      if (r > alpha) r = alpha;
-      r /= alpha;
-      q[i * prm.NY + j] = 0.25 * (1 + cos(PI * r));
-    }
-  }
+  // allocate memory
+  double* u = (double*)calloc(prm.NX * prm.NY, sizeof(double));  // x component of velocity, initialized to 0 by calloc
+  double* v = (double*)calloc(prm.NX * prm.NY, sizeof(double));  // y component of velocity, initialized to 0 by calloc
+  double* p = (double*)calloc(prm.NX * prm.NY, sizeof(double));  // pressure, initialized to 0 by calloc
 
-  memcpy(q_mine, q, prm.NX * prm.NY * sizeof(double));
+  // // set initial condition
+  // for (int i = 1; i < prm.NX - 1; i++) {
+  //   for (int j = 1; j < prm.NY - 1; j++) {
+  //     U(i, j) = 0;
+  //     V(i, j) = -sin(2 * PI * x(i)) * sin(PI * y(j)) * sin(PI * y(j));
+  //     r = sqrt((x(i) - X0) * (x(i) - X0) + (y(j) - Y0) * (y(j) - Y0));
+  //     if (r > alpha) r = alpha;
+  //     r /= alpha;
+  //     q[i * prm.NY + j] = 0.25 * (1 + cos(PI * r));
+  //   }
+  // }
 
   // count time
   clock_t start, end;
   start = clock();
   while (t < 2) {
-    Semilag2(u, v, q, q0, aux, prm);
+    // advection term
+    Semilag2(u, v, u, prm);
+    Semilag2(u, v, v, prm);
     t += prm.dt;
   }
   end = clock();
   printf("time = %lf\n", (double)(end - start) / CLOCKS_PER_SEC);
 
-  double max_diff = 0.0, s;
-  printf("t = %lf\n", t);
-  for (int i = 1; i < prm.NX - 1; i++) {
-    for (int j = 1; j < prm.NY - 1; j++) {
-      s = fabs(q[i * prm.NY + j] - q_mine[i * prm.NY + j]);
-      if (max_diff < s) max_diff = s;
-    }
-  }
-  printf("max_diff = %g\n", max_diff);
-
   free(u);
   free(v);
-  free(q);
-  free(ADVq);
 
   return 0;
 }
