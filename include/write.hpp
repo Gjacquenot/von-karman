@@ -67,11 +67,23 @@ void print(string str, int64_t time) {
 // @param v velocity in y direction
 // @param t time at which the solution is written
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
-void write_sol(ofstream &file, double *u, double *v, double t, Prm prm) {
+void write_sol(ofstream &file, double *u, double *v, double t, Prm prm, bool ghost) {
   file << t << endl;
-  for (int i = 0; i < prm.NX; i++) {
-    for (int j = 0; j < prm.NY; j++) {
-      file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
+  if (ghost) {
+    for (int i = 0; i < prm.NX; i++) {
+      for (int j = 0; j < prm.NY; j++) {
+        file << U(i, j) << " ";
+      }
+      file << endl;
+    }
+    file << endl;
+  } else {
+    for (int i = 1; i < prm.NX - 1; i++) {
+      for (int j = 1; j < prm.NY - 1; j++) {
+        // file << U(i, j) << " ";
+        file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
+      }
+      file << endl;
     }
     file << endl;
   }

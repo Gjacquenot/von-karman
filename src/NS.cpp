@@ -6,7 +6,7 @@
 void Semilag(double* u, double* v, double* q, Prm prm, int sign) {
   int sign_u, sign_v;
   double a, b;
-  double* aux = (double*)malloc(prm.size_ghost * sizeof(double));
+  double* aux = (double*)calloc(prm.NXNY, sizeof(double));
   for (int i = 1; i < prm.NX - 1; i++) {
     for (int j = 1; j < prm.NY - 1; j++) {
       // if (U(i, j) > 0) {
@@ -62,13 +62,13 @@ void Semilag(double* u, double* v, double* q, Prm prm, int sign) {
                             (1 - a) * (1 - b) * q[(i - sign_u) * prm.NY + j - sign_v];
     }
   }
-  memcpy(q, aux, prm.size_ghost * sizeof(double));
+  memcpy(q, aux, prm.NXNY * sizeof(double));
   free(aux);
 }
 
 // 2nd order semi-Lagrangian advection
 void Semilag2(double* u, double* v, double* q0, double* q1, Prm prm) {
-  memcpy(q1, q0, prm.size_ghost * sizeof(double));
+  memcpy(q1, q0, prm.NXNY * sizeof(double));
   Semilag(u, v, q1, prm, 1);
   Semilag(u, v, q1, prm, -1);
   for (int i = 0; i < prm.NX * prm.NY; i++)
@@ -77,6 +77,7 @@ void Semilag2(double* u, double* v, double* q0, double* q1, Prm prm) {
 }
 
 void BC_velocity(double* u, double* v, Prm prm) {
+  // mine
   for (int j = 1; j < prm.NY - 1; j++) {
     // left boundary: u = U, v = 0, \partial_x p = 0
     U(0, j) = 2 * prm.U - U(1, j);
@@ -93,6 +94,24 @@ void BC_velocity(double* u, double* v, Prm prm) {
     U(i, prm.NY - 1) = U(i, prm.NY - 2);
     V(i, prm.NY - 1) = -V(i, prm.NY - 2);
   }
+
+  // CFD lecture example
+  // for (int j = 1; j < prm.NY - 1; j++) {
+  //   // left boundary: u = U, v = 0, \partial_x p = 0
+  //   U(0, j) = -U(1, j);
+  //   V(0, j) = -V(1, j);
+  //   // right boundary: \partial_x u = 0, \partial_x v = 0, p = 0
+  //   U(prm.NX - 1, j) = -U(prm.NX - 2, j);
+  //   V(prm.NX - 1, j) = -V(prm.NX - 2, j);
+  // }
+  // for (int i = 1; i < prm.NX - 1; i++) {
+  //   // bottom boundary: \partial_y u = 0, v = 0, \partial_y p = 0
+  //   U(i, 0) = -U(i, 1);
+  //   V(i, 0) = -V(i, 1);
+  //   // top boundary: \partial_y u = 0, v = 0, \partial_y p = 0
+  //   U(i, prm.NY - 1) = 2 - U(i, prm.NY - 2);
+  //   V(i, prm.NY - 1) = -V(i, prm.NY - 2);
+  // }
 }
 
 void BC_pressure(double* p, Prm prm) {
@@ -100,7 +119,8 @@ void BC_pressure(double* p, Prm prm) {
     // left boundary: u = U, v = 0, \partial_x p = 0
     P(0, j) = P(1, j);
     // right boundary: \partial_x u = 0, \partial_x v = 0, p = 0
-    P(prm.NX - 1, j) = -P(prm.NX - 2, j);
+    // P(prm.NX - 1, j) = P(prm.NX - 2, j);  // CFD lecture example
+    P(prm.NX - 1, j) = -P(prm.NX - 2, j);  // mine
   }
   for (int i = 1; i < prm.NX - 1; i++) {
     // bottom boundary: \partial_y u = 0, v = 0, \partial_y p = 0
@@ -156,12 +176,12 @@ void buildLaplaceMatrix(vector<Trip>& coeffs, Prm prm) {
   // ||                                            |          .   |          .   |          .   ||
   // ||                                            |            1 |           -2 |            1 ||
   // ||-----------------------------------------------------------------------------------------||
-  // ||                                                           | 1            | -1           ||
-  // ||                                                           |   1          |   -1         ||
+  // ||                                                           | 1            | -3           ||
+  // ||                                                           |   1          |   -3         ||
   // ||                                                           |      .       |      .       ||
   // ||                                                           |        .     |        .     ||
   // ||                                                           |          .   |          .   ||
-  // ||                                                           |            1 |           -1 ||
+  // ||                                                           |            1 |           -3 ||
   // ||-----------------------------------------------------------------------------------------||
 
   // Matrix for the 2nd derivative in y (except for the division by dy^2)
@@ -209,44 +229,77 @@ void buildLaplaceMatrix(vector<Trip>& coeffs, Prm prm) {
   // dy -> (3 * ny - 2) * nx
   // common (diag) -> nx * ny
   // total = dx + dy - common = 5 * nx * ny - 2 * ny - 2 * nx
+
+  // we will store the minus of the coefficients, because we will use the cholensky decomposition, which requires a positive definite matrix
+
+  // coeffs.reserve((uint)(prm.nx * prm.ny));
+  // coeffs.push_back(Trip(0, 0, 32));
+  // coeffs.push_back(Trip(0, 1, 9));
+  // coeffs.push_back(Trip(0, 2, 16));
+  // coeffs.push_back(Trip(0, 3, 23));
+  // coeffs.push_back(Trip(0, 4, 30));
+  // coeffs.push_back(Trip(0, 5, 37));
+  // coeffs.push_back(Trip(1, 0, 9));
+  // coeffs.push_back(Trip(1, 1, 46));
+  // coeffs.push_back(Trip(1, 2, 23));
+  // coeffs.push_back(Trip(1, 3, 30));
+  // coeffs.push_back(Trip(1, 4, 37));
+  // coeffs.push_back(Trip(1, 5, 44));
+  // coeffs.push_back(Trip(2, 0, 16));
+  // coeffs.push_back(Trip(2, 1, 23));
+  // coeffs.push_back(Trip(2, 2, 60));
+  // coeffs.push_back(Trip(2, 3, 37));
+  // coeffs.push_back(Trip(2, 4, 44));
+  // coeffs.push_back(Trip(2, 5, 51));
+  // coeffs.push_back(Trip(3, 0, 23));
+  // coeffs.push_back(Trip(3, 1, 30));
+  // coeffs.push_back(Trip(3, 2, 37));
+  // coeffs.push_back(Trip(3, 3, 74));
+  // coeffs.push_back(Trip(3, 4, 51));
+  // coeffs.push_back(Trip(3, 5, 58));
+  // coeffs.push_back(Trip(4, 0, 30));
+  // coeffs.push_back(Trip(4, 1, 37));
+  // coeffs.push_back(Trip(4, 2, 44));
+  // coeffs.push_back(Trip(4, 3, 51));
+  // coeffs.push_back(Trip(4, 4, 88));
+  // coeffs.push_back(Trip(4, 5, 65));
+  // coeffs.push_back(Trip(5, 0, 37));
+  // coeffs.push_back(Trip(5, 1, 44));
+  // coeffs.push_back(Trip(5, 2, 51));
+  // coeffs.push_back(Trip(5, 3, 58));
+  // coeffs.push_back(Trip(5, 4, 65));
+  // coeffs.push_back(Trip(5, 5, 102));
+
   coeffs.reserve((uint)(5 * prm.nx * prm.ny - 2 * (prm.ny + prm.nx)));
   int dim = prm.nx * prm.ny;
-  uint count = 0;
   double dx2 = prm.dx * prm.dx;
   double dy2 = prm.dy * prm.dy;
   double diagX, diagY;
 
-  // diagonal
-  for (int i = 0; i < prm.nx; i++) {
-    if (i == 0 || i == prm.nx - 1)
-      diagX = -1.;
-    else
-      diagX = -2.;
-    for (int j = 0; j < prm.ny; j++) {
-      if (j == 0 || j == prm.ny - 1)
-        diagY = -1.;
-      else
-        diagY = -2.;
-      coeffs[count] = Trip(dim * i + j, dim * i + j, diagX / dx2 + diagY / dy2);
-      count++;
+  for (int i = 0; i < dim; i++) {
+    // diagonal
+    diagX = -2. / dx2;
+    diagY = -2. / dy2;
+    if (i % prm.ny == 0 || i % prm.ny == prm.ny - 1) diagY = -1. / dy2;
+    // for full neumann BC (test case, remebr that in this case the matrix is singular and the cholensky decomposition will fail, you have to change for example the component (0, 1) to 0, and, to make the matrix symmetric, the component (1, 0) to 0)
+    // if (i < prm.ny || i >= dim - prm.ny) diagX = -1. / dx2;
+    // for mixed dirichlet-neumann BC (our case)
+    if (i < prm.ny) diagX = -1. / dx2;
+    if (i >= dim - prm.ny) diagX = -3. / dx2;
+    coeffs.push_back(Trip(i, i, -diagX - diagY));
+
+    // Dxx part (secondary diagonals)
+    if (i < dim - prm.ny) {
+      coeffs.push_back(Trip(i, i + prm.ny, -1. / dx2));  // upper diagonal
+      coeffs.push_back(Trip(i + prm.ny, i, -1. / dx2));  // lower diagonal
     }
-  }
 
-  // Dxx part
-  for (int i = 0; i < dim - prm.ny; i++) {
-    coeffs[count] = Trip(i, i + prm.ny, 1 / dx2);  // upper diagonal
-    count++;
-    coeffs[count] = Trip(i + prm.ny, i, 1 / dx2);  // lower diagonal
-    count++;
-  }
-
-  // Dyy part
-  for (int i = 0; i < dim - 1; i++) {
+    // Dyy part (secondary diagonals)
     if ((i + 1) % prm.ny != 0) {
-      coeffs[count] = Trip(i, i + 1, 1 / dy2);  // upper diagonal
-      count++;
-      coeffs[count] = Trip(i + 1, i, 1 / dy2);  // lower diagonal
-      count++;
+      coeffs.push_back(Trip(i, i + 1, -1. / dy2));  // upper diagonal
+      coeffs.push_back(Trip(i + 1, i, -1. / dy2));  // lower diagonal
     }
   }
+  // coeffs.push_back(Trip(0, 1, 1. / dy2));
+  // coeffs.push_back(Trip(1, 0, 1. / dy2));
 }

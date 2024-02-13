@@ -17,3 +17,4 @@
 *.table
 
 **/.vscode/**
+**/__pycache__/**

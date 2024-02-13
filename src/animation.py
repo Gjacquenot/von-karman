@@ -28,14 +28,14 @@ interval = 1000 / FPS  # interval between frames in milliseconds
 duration = 40  # duration of the animation in seconds
 
 
-def animate(save=False):
+def animate(filename: str, save=False):
     # Create a figure
     fig, ax = plt.subplots()
 
     # Read data
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # Replace with the actual file path
-    file_path = script_dir + '/../data/solution.txt'
+    file_path = script_dir + '/../' + filename
     headers, data_blocks = read_data_file(file_path)
 
     # in practice it takes more time to animate, so we divide the duration
@@ -49,13 +49,12 @@ def animate(save=False):
     # Speed of the animation
     speed = len(data_blocks) / num_frames
 
+    # Print some information
+    print("Length of data: ", len(data_blocks))
     print("Number of frames: ", num_frames)
     print("Speed: ", speed)
     print("Interval: ", interval)
     print("Expected duration: ", duration)
-    # print("len(data_blocks): ", len(data_blocks))
-    # print("len(headers): ", len(headers))
-    # print("len(data_blocks_freq): ", len(data_blocks_freq))
 
     # Create data
     nx = data_blocks.shape[1]
@@ -66,11 +65,25 @@ def animate(save=False):
 
     X = np.linspace(dx / 2, Lx - dx / 2, nx)
     Y = np.linspace(dy / 2, Ly - dy / 2, ny)
-    X, Y = np.meshgrid(X, Y, indexing='ij')
+    X, Y = np.meshgrid(X, Y, indexing='xy')
+    # transpose the data and reverse
+    old_data_blocks = data_blocks
+    data_blocks = np.zeros((len(old_data_blocks), ny, nx))
+    for i in range(len(old_data_blocks)):
+        data_blocks[i] = old_data_blocks[i].T[::-1]
+
     Z = data_blocks[0]
     Z_MAX = np.max(data_blocks)
     Z_MIN = 0
-    plot_args = {'cmap': color}
+    plot_args = {
+        'cmap': color,
+        'extent': [
+            0,
+            Lx,
+            0,
+            Ly],
+        'vmin': Z_MIN,
+        'vmax': Z_MAX}
     text_args = {'x': 0.5, 'y': y_pos_text, 's': '', 'transform': ax.transAxes,
                  'fontsize': FONTSIZE_TIME, 'horizontalalignment': 'center'}
     time_text = ax.text(**text_args)
@@ -100,7 +113,7 @@ def animate(save=False):
         Z = data_blocks[real_frame]
 
         # Update the time text
-        time_text.set_text('t = %.2f' % headers[real_frame])
+        time_text.set_text('t = %.3f' % headers[real_frame])
 
         # Update the plot
         plot[0] = ax.imshow(Z, **plot_args)
@@ -134,4 +147,6 @@ except IndexError:
     Lx = np.nan
     Ly = np.nan
 
-animate()
+sol_u = 'data/u_solution.txt'
+
+animate(sol_u)
