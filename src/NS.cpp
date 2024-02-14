@@ -80,7 +80,7 @@ void BC_velocity(double* u, double* v, Prm prm) {
   // mine
   for (int j = 1; j < prm.NY - 1; j++) {
     // left boundary: u = U, v = 0, \partial_x p = 0
-    U(0, j) = 2 * prm.U - U(1, j);
+    U(0, j) = 2 - U(1, j);
     V(0, j) = -V(1, j);
     // right boundary: \partial_x u = 0, \partial_x v = 0, p = 0
     U(prm.NX - 1, j) = U(prm.NX - 2, j);
