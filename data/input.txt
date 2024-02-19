@@ -1,11 +1,12 @@
 Lx 1
 Ly 1
-nx 54
-ny 68
+nx 70
+ny 70
 dt 0.0001
-Tfinal 0.1
+Tfinal 0.001
 Re 100
-Lscale 1
+Lscale 0.25
 nu 1.506e-5
+obstacle 0
 animation 1
 animation_interval 1

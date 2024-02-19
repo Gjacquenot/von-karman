@@ -30,6 +30,7 @@ typedef struct prm {
   double Re;
   size_t NXNY;
   size_t nxny;
+  bool obstacle_ON;
 } Prm;
 
 #endif  // MISC_HPP

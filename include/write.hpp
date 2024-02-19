@@ -10,19 +10,28 @@
 
 using namespace std;
 
+// template <typename... Args>
+
+// // @brief Write the arguments to a temporary file
+// // @param args arguments to be written to the file
+// void write_tmp_file(Args... args) {
+//   std::ofstream file_tmp;
+//   file_tmp.open("data/tmp_animation.txt");
+//   // write all the arguments to the file one by one (separated by a space)
+//   for (auto &&i : {args...}) {
+//     file_tmp << i << " ";
+//   }
+//   // (file_tmp << ... << args) << std::endl;
+//   file_tmp.close();
+// }
 template <typename... Args>
 
-// @brief Write the arguments to a temporary file
-// @param args arguments to be written to the file
 void write_tmp_file(Args... args) {
-  std::ofstream file_tmp;
-  file_tmp.open("data/tmp_animation.txt");
+  ofstream file;
+  file.open("data/tmp_animation.txt");
   // write all the arguments to the file one by one (separated by a space)
-  for (auto &&i : {args...}) {
-    file_tmp << i << " ";
-  }
-  // (file_tmp << ... << args) << std::endl;
-  file_tmp.close();
+  ((file << args << " "), ...);
+  file.close();
 }
 
 // @brief Print a string and a time in a human-readable format (in the form: "string xx.xx units")
@@ -72,6 +81,7 @@ void write_sol(ofstream &file, double *u, double *v, double t, Prm prm, bool gho
   if (ghost) {
     for (int i = 0; i < prm.NX; i++) {
       for (int j = 0; j < prm.NY; j++) {
+        // file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
         file << U(i, j) << " ";
       }
       file << endl;
@@ -80,8 +90,8 @@ void write_sol(ofstream &file, double *u, double *v, double t, Prm prm, bool gho
   } else {
     for (int i = 1; i < prm.NX - 1; i++) {
       for (int j = 1; j < prm.NY - 1; j++) {
-        // file << U(i, j) << " ";
-        file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
+        file << U(i, j) << " ";
+        // file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
       }
       file << endl;
     }

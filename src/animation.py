@@ -12,6 +12,7 @@ from typing import cast
 import sys
 import time
 from read_data import read_data_file
+from matplotlib.patches import Circle, Rectangle
 
 
 # DEFAULTS
@@ -23,9 +24,7 @@ y_pos_text = 1.03
 y_pos_title = y_pos_text + 0.14
 color = cm['inferno']
 colorbar_args = {'shrink': 0.5, 'aspect': 10, 'location': 'left'}
-FPS = 50
-interval = 1000 / FPS  # interval between frames in milliseconds
-duration = 40  # duration of the animation in seconds
+duration = 10  # duration of the animation in seconds
 
 
 def animate(filename: str, save=False):
@@ -38,21 +37,13 @@ def animate(filename: str, save=False):
     file_path = script_dir + '/../' + filename
     headers, data_blocks = read_data_file(file_path)
 
-    # in practice it takes more time to animate, so we divide the duration
-    # by 2 to keep the seconds more or less the same
-
-    # frames to be animated
-    num_frames = int(duration * 1000.0 / interval)
-    if num_frames > len(data_blocks):
-        num_frames = len(data_blocks)
-
-    # Speed of the animation
-    speed = len(data_blocks) / num_frames
+    num_frames = len(data_blocks)
+    FPS = int(num_frames / duration) + 1  # +1 to ensure positivity
+    interval = 1000 / FPS  # interval between frames in milliseconds
 
     # Print some information
     print("Length of data: ", len(data_blocks))
     print("Number of frames: ", num_frames)
-    print("Speed: ", speed)
     print("Interval: ", interval)
     print("Expected duration: ", duration)
 
@@ -66,6 +57,7 @@ def animate(filename: str, save=False):
     X = np.linspace(dx / 2, Lx - dx / 2, nx)
     Y = np.linspace(dy / 2, Ly - dy / 2, ny)
     X, Y = np.meshgrid(X, Y, indexing='xy')
+
     # transpose the data and reverse
     old_data_blocks = data_blocks
     data_blocks = np.zeros((len(old_data_blocks), ny, nx))
@@ -83,7 +75,9 @@ def animate(filename: str, save=False):
             0,
             Ly],
         'vmin': Z_MIN,
-        'vmax': Z_MAX}
+        'vmax': Z_MAX,
+        'interpolation': 'none'}
+    # 'interpolation': 'spline16'}
     text_args = {'x': 0.5, 'y': y_pos_text, 's': '', 'transform': ax.transAxes,
                  'fontsize': FONTSIZE_TIME, 'horizontalalignment': 'center'}
     time_text = ax.text(**text_args)
@@ -91,6 +85,16 @@ def animate(filename: str, save=False):
     # Axes
     ax.set_xlabel(X_LABEL)
     ax.set_ylabel(Y_LABEL)
+
+    # plot a circle
+    if object != "":
+        if object == 'circle':
+            obstacle = Circle((x0, y0), radius, color='r', fill=False)
+        elif object == 'rectangle':
+            obstacle = Rectangle(
+                (x0, y0), width, height, color='r', fill=False)
+        # Add the circle to the plot
+        ax.add_artist(obstacle)
 
     # Create plot
     plot = [ax.imshow(Z, **plot_args)]
@@ -107,7 +111,7 @@ def animate(filename: str, save=False):
         # ax.clear()
         plot[0].remove()
 
-        real_frame = int(frame * speed)
+        real_frame = int(frame)
 
         # Update the arrays
         Z = data_blocks[real_frame]
@@ -140,12 +144,39 @@ def animate(filename: str, save=False):
 UNIT_TIME = 1000  # in seconds
 LABEL_TIME = "ms"
 start_time = time.time()
+
 try:
     Lx = float(sys.argv[1])
     Ly = float(sys.argv[2])
 except IndexError:
     Lx = np.nan
     Ly = np.nan
+try:
+    object = sys.argv[3]
+except IndexError:
+    object = ""
+
+if object == 'circle':
+    try:
+        x0 = float(sys.argv[4])
+        y0 = float(sys.argv[5])
+        radius = float(sys.argv[6])
+    except IndexError:
+        x0 = np.nan
+        y0 = np.nan
+        radius = np.nan
+elif object == 'rectangle':
+    try:
+        x0 = float(sys.argv[4])
+        y0 = float(sys.argv[5])
+        width = float(sys.argv[6])
+        height = float(sys.argv[7])
+    except IndexError:
+        x0 = np.nan
+        y0 = np.nan
+        x1 = np.nan
+        y1 = np.nan
+
 
 sol_u = 'data/u_solution.txt'
 
