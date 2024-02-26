@@ -1,9 +1,9 @@
-Lx 1
+Lx 3
 Ly 1
-nx 70
+nx 210
 ny 70
-dt 0.0001
-Tfinal 0.001
+dt 0.001
+Tfinal 0.01
 Re 100
 Lscale 0.25
 nu 1.506e-5

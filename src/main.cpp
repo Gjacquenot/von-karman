@@ -14,6 +14,8 @@ using namespace Eigen;
 
 #define EPS 1e-8
 
+// #define extensive_print 1
+
 #define START_TIMER() begin = chrono::steady_clock::now()
 #define END_TIMER() end = chrono::steady_clock::now()
 #define ADD_TIME_TO(x) x += chrono::duration_cast<chrono::microseconds>(end - begin).count()
@@ -91,7 +93,7 @@ int main(void) {
   double* adv_v = (double*)malloc(prm.NXNY * sizeof(double));  // advection term of v
   // double* c = (double*)malloc(prm.NXNY * sizeof(double));
   // for (int i = 0; i < prm.NXNY; i++) c[i] = 1;
-
+  double Fx, Fy, rhs_u, rhs_v;
   if (animation) {
     file_output_anim.open(filename_solution);
     write_sol(file_output_anim, u, v, 0, prm, false);
@@ -99,6 +101,7 @@ int main(void) {
   END_TIMER();
   ADD_TIME_TO(total_files);
 
+  // ------------- Obstacle setup ----------------
   START_TIMER();
   Circle obstacle = Circle(prm.LX / 8, prm.LY / 2, prm.L / 2, prm);  // L is the diameter of the circle
   END_TIMER();
@@ -207,8 +210,14 @@ int main(void) {
     END_TIMER();
     ADD_TIME_TO(total_advection);
 
-    file_output_anim << "Advection" << endl;
-    write_sol(file_output_anim, adv_u, adv_v, 500000000000000, prm, true);
+#ifdef extensive_print
+    if (WRITE_ANIM()) {
+      file_output_anim << "time: " << t << endl
+                       << "" << endl;
+      file_output_anim << "Advection" << endl;
+      write_sol(file_output_anim, adv_u, adv_v, 500000000000000, prm, true);
+    }
+#endif
 
     // ---------- diffusion term ------------
     START_TIMER();
@@ -217,10 +226,16 @@ int main(void) {
         if (prm.obstacle_ON && obstacle.IsInside[i * prm.NY + j]) continue;
         lap = (U(i + 1, j) - 2 * U(i, j) + U(i - 1, j)) / (prm.dx * prm.dx) +
               (U(i, j + 1) - 2 * U(i, j) + U(i, j - 1)) / (prm.dy * prm.dy);
-        U1(i, j) = ADV_U(i, j) + prm.dt * lap / prm.Re;
+        rhs_u = ADV_U(i, j) + prm.dt * lap / prm.Re;
         lap = (V(i + 1, j) - 2 * V(i, j) + V(i - 1, j)) / (prm.dx * prm.dx) +
               (V(i, j + 1) - 2 * V(i, j) + V(i, j - 1)) / (prm.dy * prm.dy);
-        V1(i, j) = ADV_V(i, j) + prm.dt * lap / prm.Re;
+        rhs_v = ADV_V(i, j) + prm.dt * lap / prm.Re;
+        U1(i, j) = rhs_u;
+        V1(i, j) = rhs_v;
+        if (prm.obstacle_ON && obstacle.IsInside[i * prm.NY + j]) {
+          U1(i, j) += -rhs_u + U(i, j);
+          V1(i, j) += -rhs_v + V(i, j);
+        }
       }
     }
     // for (int i = 1; i < prm.NX - 1; i++) {
@@ -232,8 +247,12 @@ int main(void) {
     END_TIMER();
     ADD_TIME_TO(total_diffusion);
 
-    file_output_anim << "Diffusion before boundary" << endl;
-    write_sol(file_output_anim, u1, v1, 500000000000000, prm, true);
+#ifdef extensive_print
+    if (WRITE_ANIM()) {
+      file_output_anim << "Diffusion before boundary" << endl;
+      write_sol(file_output_anim, u1, v1, 500000000000000, prm, true);
+    }
+#endif
 
     // update velocity ghost points
     START_TIMER();
@@ -241,8 +260,24 @@ int main(void) {
     END_TIMER();
     ADD_TIME_TO(total_boundary);
 
-    file_output_anim << "Diffusion after boundary" << endl;
-    write_sol(file_output_anim, u1, v1, 500000000000000, prm, true);
+    // add the forcing to the interface points
+    // for (int i = 0; i < prm.NX; i++) {
+    //   for (int j = 0; j < prm.NY; j++) {
+    //     if (prm.obstacle_ON && obstacle.IsForcing[i * prm.NY + j]) {
+    //       Fx = (0. - U(i, j)) / prm.dt - U1(i, j);
+    //       Fy = (0. - V(i, j)) / prm.dt - V1(i, j);
+    //       U1(i, j) += prm.dt * Fx;
+    //       V1(i, j) += prm.dt * Fy;
+    //     }
+    //   }
+    // }
+
+#ifdef extensive_print
+    if (WRITE_ANIM()) {
+      file_output_anim << "Diffusion after boundary" << endl;
+      write_sol(file_output_anim, u1, v1, 500000000000000, prm, true);
+    }
+#endif
 
     // ---------- pressure term ------------
     START_TIMER();
@@ -258,26 +293,34 @@ int main(void) {
     }
     mean /= (prm.nx * prm.ny);
 
-    file_output_anim << "(minus) Divergence" << endl;
-    for (int i = 0; i < prm.nx; i++) {
-      for (int j = 0; j < prm.ny; j++) {
-        file_output_anim << div[i * prm.ny + j] << " ";
+#ifdef extensive_print
+    if (WRITE_ANIM()) {
+      file_output_anim << "(minus) Divergence" << endl;
+      for (int i = 0; i < prm.nx; i++) {
+        for (int j = 0; j < prm.ny; j++) {
+          file_output_anim << div[i * prm.ny + j] << " ";
+        }
+        file_output_anim << endl;
       }
-      file_output_anim << endl;
     }
+#endif
 
     // we remove the mean to ensure that the Poisson equation has a solution.
     for (int i = 0; i < prm.nx * prm.ny; i++) div[i] -= mean;
 
-    // print div
-    // if (numSteps == ITER) {
-    file_output_anim << "(minus) Divergence after substarction mean" << endl;
-    for (int i = 0; i < prm.nx; i++) {
-      for (int j = 0; j < prm.ny; j++) {
-        file_output_anim << DIV(i, j) << " ";
+      // print div
+      // if (numSteps == ITER) {
+#ifdef extensive_print
+    if (WRITE_ANIM()) {
+      file_output_anim << "(minus) Divergence after substarction mean" << endl;
+      for (int i = 0; i < prm.nx; i++) {
+        for (int j = 0; j < prm.ny; j++) {
+          file_output_anim << DIV(i, j) << " ";
+        }
+        file_output_anim << endl;
       }
-      file_output_anim << endl;
     }
+#endif
 
     END_TIMER();
     ADD_TIME_TO(total_others);
@@ -300,17 +343,21 @@ int main(void) {
     for (int i = 1; i < prm.NX - 1; i++) {
       for (int j = 1; j < prm.NY - 1; j++) {
         // file_output_anim << p_solved((i - 1) * prm.ny + (j - 1)) << " ";
-        if (prm.obstacle_ON && obstacle.IsInside[i * prm.NY + j])
-          P(i, j) = 0;
-        else
-          P(i, j) = p_solved((i - 1) * prm.ny + (j - 1));
+        // if (prm.obstacle_ON && obstacle.IsInside[i * prm.NY + j])
+        //   P(i, j) = 0;
+        // else
+        P(i, j) = p_solved((i - 1) * prm.ny + (j - 1));
       }
       // file_output_anim << endl;
     }
     // file_output_anim << endl;
 
-    file_output_anim << "Pressure (after setting interior to zero)" << endl;
-    write_sol(file_output_anim, p, p, 500000000000000, prm, false);
+#ifdef extensive_print
+    if (WRITE_ANIM()) {
+      file_output_anim << "Pressure (after setting interior to zero)" << endl;
+      write_sol(file_output_anim, p, p, 500000000000000, prm, false);
+    }
+#endif
 
     END_TIMER();
     ADD_TIME_TO(total_solve_laplace);
@@ -327,7 +374,10 @@ int main(void) {
     memcpy(v, v1, prm.NXNY * sizeof(double));
     for (int i = 1; i < prm.NX - 1; i++) {
       for (int j = 1; j < prm.NY - 1; j++) {
-        if (prm.obstacle_ON && obstacle.IsInside[i * prm.NY + j]) continue;
+        // if (prm.obstacle_ON && (obstacle.IsForcing[i * prm.NY + j] || obstacle.IsInside[i * prm.NY + j])) {
+        //   U(i, j) = U1(i, j);
+        //   V(i, j) = V1(i, j);
+        // }
         U(i, j) = U1(i, j) - (P(i + 1, j) - P(i - 1, j)) / (2 * prm.dx);
         V(i, j) = V1(i, j) - (P(i, j + 1) - P(i, j - 1)) / (2 * prm.dy);
       }
@@ -342,7 +392,11 @@ int main(void) {
 
     START_TIMER();
     if (WRITE_ANIM()) {
+#ifdef extensive_print
       write_sol(file_output_anim, u, v, t, prm, true);
+#else
+      write_sol(file_output_anim, u, v, t, prm, false);
+#endif
     }
 
     if (t > fraction_completed * count - EPS) {

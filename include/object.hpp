@@ -24,6 +24,7 @@ class Object {
  public:
   bool* IsInside;       // 1 if the point is inside the object, 0 otherwise.
   bool* IsGhost;        // 1 if the point is a ghost point, 0 otherwise.
+  bool* IsForcing;      // 1 if the point is on the interface (fluid point and just next to a ghost point), 0 otherwise. These are the points where the forcing term is applied.
   Grid* GhostPoints;    // Array of points that are just inside the object.
   Point* MirrorPoints;  // Array of points that are mirrored by the object from the ghost points.
   // create a matrix of 6 interpolating points for each ghost point
@@ -33,6 +34,7 @@ class Object {
   void init(Prm prm) {
     IsInside = new bool[prm.NX * prm.NY];
     IsGhost = new bool[prm.NX * prm.NY];
+    IsForcing = new bool[prm.NX * prm.NY];
     int count_gh = 0;
     for (int i = 0; i < prm.NX; i++) {
       for (int j = 0; j < prm.NY; j++) {
@@ -60,6 +62,18 @@ class Object {
           MirrorPoints[count] = mirror_point(x(i), y(j));
           set_interpolating_points(i, j, MirrorPoints[count], count, prm);
           count++;
+        }
+      }
+    }
+
+    // set the IsForcing array
+    for (int i = 0; i < prm.NX; i++) {
+      for (int j = 0; j < prm.NY; j++) {
+        IsForcing[i * prm.NY + j] = false;
+        if (!IsInside[i * prm.NY + j]) {
+          if (is_inside(i - 1, j, prm) || is_inside(i + 1, j, prm) || is_inside(i, j - 1, prm) || is_inside(i, j + 1, prm)) {
+            IsForcing[i * prm.NY + j] = 7;
+          }
         }
       }
     }
