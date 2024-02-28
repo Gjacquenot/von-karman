@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.fftpack import dst, dct
-
+"""
 def build_up_b(rho, dt, dx, dy, u, v):
     b = np.zeros_like(u)
     b[1:-1, 1:-1] = (rho * (1 / dt * ((u[1:-1, 2:] - u[1:-1, 0:-2]) / (2 * dx) +
@@ -84,7 +84,7 @@ def solve_new(p, dx, dy, b):
         it += 1
 
     return p, err
-
+"""
 
 def solve_spectral(nx_sp, ny_sp, K, prhs):
 
@@ -97,5 +97,15 @@ def solve_spectral(nx_sp, ny_sp, K, prhs):
     p[:, :] = np.fft.ifft(dct(pk, type=1, axis=0) / (2 * (ny_sp + 1)), axis=1)
 
     return p
+def solve_spectral_v2(nx_sp, ny_sp, K, prhs):
 
+    p=np.zeros_like(prhs)
+
+    prhsk = dct(dct(prhs, type=1, axis=1), type=1, axis=0)
+
+    pk = prhsk / (-K)
+
+    p[:, :] = dct(dct(pk, type=1, axis=0) / (2 * (ny_sp + 1)), type = 1, axis=1) / (2 * (nx_sp + 1))
+
+    return p
 

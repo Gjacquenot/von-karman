@@ -11,9 +11,9 @@ boundary_conditions = no_bc
 
 # Time parameters
 t_start = 0      # Start time
-t_end = 100       # End time
-dt = 0.0           # Time step (if zero, the CFL condition is used)
-dt_io = 2     # Time step for input/output
+t_end = 200       # End time
+dt = 0.01           # Time step (if zero, the CFL condition is used)
+dt_io = 10     # Time step for input/output
 
 # Name for the simulation
 folder_path = results/            # Folder to save simulation results

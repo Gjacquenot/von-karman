@@ -80,40 +80,40 @@ void Semilag2(double* u, double* v, double* q0, double* q1, Prm prm, Object& obs
   Semilag(u, v, q1, prm, 1, obstacle);
 }
 
-void upwind(double* u, double* v, double* q, Prm prm, int sign, Object& obstacle) {
-  int sign_u, sign_v;
-  double* aux = (double*)calloc(prm.NXNY, sizeof(double));
-  double q_x, q_y;
-  for (int i = 1; i < prm.NX - 1; i++) {
-    for (int j = 1; j < prm.NY - 1; j++) {
-      if (prm.obstacle_ON && obstacle.IsInside[i * prm.NY + j]) {
-        continue;
-      }
-      if (sign * U(i, j) > 0) {
-        q_x = q[i * prm.NY + j] - q[(i - 1) * prm.NY + j];
-      } else {
-        q_x = q[(i + 1) * prm.NY + j] - q[i * prm.NY + j];
-      }
-      if (sign * V(i, j) > 0) {
-        q_y = q[i * prm.NY + j] - q[i * prm.NY + j - 1];
-      } else {
-        q_y = q[i * prm.NY + j + 1] - q[i * prm.NY + j];
-      }
-      aux[i * prm.NY + j] = q[i * prm.NY + j] - sign * prm.dt * (U(i, j) * q_x / prm.dx + V(i, j) * q_y / prm.dy);
-    }
-  }
+// void upwind(double* u, double* v, double* q, Prm prm, int sign, Object& obstacle) {
+//   int sign_u, sign_v;
+//   double* aux = (double*)calloc(prm.NXNY, sizeof(double));
+//   double q_x, q_y;
+//   for (int i = 1; i < prm.NX - 1; i++) {
+//     for (int j = 1; j < prm.NY - 1; j++) {
+//       if (prm.obstacle_ON && obstacle.IsInside[i * prm.NY + j]) {
+//         continue;
+//       }
+//       if (sign * U(i, j) > 0) {
+//         q_x = q[i * prm.NY + j] - q[(i - 1) * prm.NY + j];
+//       } else {
+//         q_x = q[(i + 1) * prm.NY + j] - q[i * prm.NY + j];
+//       }
+//       if (sign * V(i, j) > 0) {
+//         q_y = q[i * prm.NY + j] - q[i * prm.NY + j - 1];
+//       } else {
+//         q_y = q[i * prm.NY + j + 1] - q[i * prm.NY + j];
+//       }
+//       aux[i * prm.NY + j] = q[i * prm.NY + j] - sign * prm.dt * (U(i, j) * q_x / prm.dx + V(i, j) * q_y / prm.dy);
+//     }
+//   }
 
-  free(aux);
-}
+//   free(aux);
+// }
 
-void upwind2(double* u, double* v, double* q0, double* q1, Prm prm, Object& obstacle) {
-  memcpy(q1, q0, prm.NXNY * sizeof(double));
-  upwind(u, v, q1, prm, 1, obstacle);
-  upwind(u, v, q1, prm, -1, obstacle);
-  for (int i = 0; i < prm.NX * prm.NY; i++)
-    q1[i] = q0[i] + (q0[i] - q1[i]) / 2;
-  upwind(u, v, q1, prm, 1, obstacle);
-}
+// void upwind2(double* u, double* v, double* q0, double* q1, Prm prm, Object& obstacle) {
+//   memcpy(q1, q0, prm.NXNY * sizeof(double));
+//   upwind(u, v, q1, prm, 1, obstacle);
+//   upwind(u, v, q1, prm, -1, obstacle);
+//   for (int i = 0; i < prm.NX * prm.NY; i++)
+//     q1[i] = q0[i] + (q0[i] - q1[i]) / 2;
+//   upwind(u, v, q1, prm, 1, obstacle);
+// }
 
 void BC_velocity(double* u, double* v, Prm prm, Object& obstacle) {
   // outer boundaries
@@ -136,19 +136,8 @@ void BC_velocity(double* u, double* v, Prm prm, Object& obstacle) {
     // right boundary:
     U(prm.NX - 1, j) = U(prm.NX - 2, j);
     V(prm.NX - 1, j) = V(prm.NX - 2, j);
-    // if flow is fully developed: \partial_x u = 0, \partial_x v = 0
-    // if flow is developing: \partial_xx u = 0, \partial_xx v = 0
-    // if (U(prm.NX - 1, j) - U(prm.NX - 2, j) < TOL && U(prm.NX - 1, j) - U(prm.NX - 2, j) > -TOL) {
-    // U(prm.NX - 1, j) = U(prm.NX - 2, j);
-    // } else {
-    //   U(prm.NX - 1, j) = 2 * U(prm.NX - 2, j) - U(prm.NX - 3, j);
-    // }
-
-    // if (V(prm.NX - 1, j) - V(prm.NX - 2, j) < TOL && V(prm.NX - 1, j) - V(prm.NX - 2, j) > -TOL) {
-    // V(prm.NX - 1, j) = V(prm.NX - 2, j);
-    // } else {
-    //   V(prm.NX - 1, j) = 2 * V(prm.NX - 2, j) - V(prm.NX - 3, j);
-    // }
+    // U(prm.NX - 1, j) = 2 * U(prm.NX - 2, j) - U(prm.NX - 3, j);
+    // V(prm.NX - 1, j) = 2 * V(prm.NX - 2, j) - V(prm.NX - 3, j);
   }
 
   // for (int j = 1; j < prm.NY - 1; j++) {
@@ -277,6 +266,30 @@ void BC_pressure(double* p, Prm prm, Object& obstacle) {
   //     P(obstacle.GhostPoints[i].i, obstacle.GhostPoints[i].j) = P_m;  // partial_n p = 0 at the boundary
   //   }
   // }
+}
+
+double interpolate(double x, double y, double* phi, Prm prm) {
+  // find the indices of the cell containing the point (x, y)
+  // find I, J such that x(I) < x < x(I+1) and y(J) < y < y(J+1)
+
+  int I = 0, J = 0;  // minimum value for I and J (the maximum value is I+2 and J+2)
+  while (x(I + 1) < x + TOL) I++;
+  while (y(J + 1) < y + TOL) J++;
+
+  // interpolate (bi-linear interpolation)
+  double phi_00 = phi[I * prm.NY + J] * (x(I + 1) - x) * (y(J + 1) - y);
+  double phi_01 = phi[I * prm.NY + J + 1] * (x(I + 1) - x) * (y - y(J));
+  double phi_10 = phi[(I + 1) * prm.NY + J] * (x - x(I)) * (y(J + 1) - y);
+  double phi_11 = phi[(I + 1) * prm.NY + J + 1] * (x - x(I)) * (y - y(J));
+  return (phi_00 + phi_01 + phi_10 + phi_11) / (prm.dx * prm.dy);
+}
+
+void set_vorticity(double* u, double* v, double* w, Prm prm) {
+  for (int i = 1; i < prm.NX - 1; i++) {
+    for (int j = 1; j < prm.NY - 1; j++) {
+      W(i, j) = (V(i + 1, j) - V(i - 1, j)) / (2 * prm.dx) - (U(i, j + 1) - U(i, j - 1)) / (2 * prm.dy);
+    }
+  }
 }
 
 void buildLaplaceMatrix(vector<Trip>& coeffs, Prm prm) {

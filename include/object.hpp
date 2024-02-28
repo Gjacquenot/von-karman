@@ -179,17 +179,27 @@ class Object {
 
 class Circle : public Object {
  public:
-  double x0, y0, r;
-  Circle(double x0_, double y0_, double r_, Prm prm) : x0(x0_), y0(y0_), r(r_) {
+  double x0, y0, R;
+  double* r;
+  double* theta;
+  Circle(double x0_, double y0_, double R_, Prm prm) : x0(x0_), y0(y0_), R(R_) {
     init(prm);
+    r = new double[prm.NX * prm.NY];
+    theta = new double[prm.NX * prm.NY];
+    for (int i = 0; i < prm.NX; i++) {
+      for (int j = 0; j < prm.NY; j++) {
+        r[i * prm.NY + j] = sqrt((x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0));
+        theta[i * prm.NY + j] = atan2(y(j) - y0, x(i) - x0);
+      }
+    }
   }
   bool is_inside(int i, int j, Prm prm) override {
-    return (x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0) < r * r;
+    return (x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0) < R * R;
   }
 
   Point closest_boundary_point(double x, double y) override {
     double d = sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0));
-    return {x0 + r * (x - x0) / d, y0 + r * (y - y0) / d};
+    return {x0 + R * (x - x0) / d, y0 + R * (y - y0) / d};
   }
 };
 

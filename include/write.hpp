@@ -81,8 +81,8 @@ void write_sol(ofstream &file, double *u, double *v, double t, Prm prm, bool gho
   if (ghost) {
     for (int i = 0; i < prm.NX; i++) {
       for (int j = 0; j < prm.NY; j++) {
-        // file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
-        file << U(i, j) << " ";
+        file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
+        // file << U(i, j) << " ";
       }
       file << endl;
     }
@@ -90,8 +90,8 @@ void write_sol(ofstream &file, double *u, double *v, double t, Prm prm, bool gho
   } else {
     for (int i = 1; i < prm.NX - 1; i++) {
       for (int j = 1; j < prm.NY - 1; j++) {
-        file << U(i, j) << " ";
-        // file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
+        // file << V(i, j) << " ";
+        file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
       }
       file << endl;
     }
@@ -99,4 +99,24 @@ void write_sol(ofstream &file, double *u, double *v, double t, Prm prm, bool gho
   }
 }
 
+void write_sol_w(ofstream &file, double *w, double t, Prm prm, bool ghost) {
+  file << t << endl;
+  if (ghost) {
+    for (int i = 0; i < prm.NX; i++) {
+      for (int j = 0; j < prm.NY; j++) {
+        file << W(i, j) << " ";
+      }
+      file << endl;
+    }
+    file << endl;
+  } else {
+    for (int i = 1; i < prm.NX - 1; i++) {
+      for (int j = 1; j < prm.NY - 1; j++) {
+        file << W(i, j) << " ";
+      }
+      file << endl;
+    }
+    file << endl;
+  }
+}
 #endif  // WRITE_HPP

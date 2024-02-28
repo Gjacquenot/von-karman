@@ -5,10 +5,11 @@
 
 #define U(i, j) u[(i) * prm.NY + (j)]
 #define V(i, j) v[(i) * prm.NY + (j)]
+#define W(i, j) w[(i) * prm.NY + (j)]
 #define ADV_U(i, j) adv_u[(i) * prm.NY + (j)]
 #define ADV_V(i, j) adv_v[(i) * prm.NY + (j)]
-#define U1(i, j) u1[(i) * prm.NY + (j)]
-#define V1(i, j) v1[(i) * prm.NY + (j)]
+#define Ustar(i, j) ustar[(i) * prm.NY + (j)]
+#define Vstar(i, j) vstar[(i) * prm.NY + (j)]
 #define P(i, j) p[(i) * prm.NY + (j)]
 #define DIV(i, j) div((i) * prm.ny + (j))
 #define x(i) (-0.5 * prm.dx + (i) * prm.dx)

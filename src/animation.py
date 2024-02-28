@@ -22,7 +22,7 @@ Z_LABEL = 'z'
 FONTSIZE_TIME = 10
 y_pos_text = 1.03
 y_pos_title = y_pos_text + 0.14
-color = cm['inferno']
+color = cm['RdBu_r']  # RdBu reversed
 colorbar_args = {'shrink': 0.5, 'aspect': 10, 'location': 'left'}
 duration = 10  # duration of the animation in seconds
 
@@ -66,7 +66,7 @@ def animate(filename: str, save=False):
 
     Z = data_blocks[0]
     Z_MAX = np.max(data_blocks)
-    Z_MIN = 0
+    Z_MIN = np.min(data_blocks)
     plot_args = {
         'cmap': color,
         'extent': [
@@ -76,11 +76,16 @@ def animate(filename: str, save=False):
             Ly],
         'vmin': Z_MIN,
         'vmax': Z_MAX,
-        'interpolation': 'none'}
-    # 'interpolation': 'spline16'}
+        'interpolation': 'spline16'}
+    # 'interpolation': 'none'}
     text_args = {'x': 0.5, 'y': y_pos_text, 's': '', 'transform': ax.transAxes,
                  'fontsize': FONTSIZE_TIME, 'horizontalalignment': 'center'}
     time_text = ax.text(**text_args)
+
+    # set title
+    ax.set_title(
+        'voriticity' if vorticity else 'sqrt(u^2 + v^2)',
+        y=y_pos_title)
 
     # Axes
     ax.set_xlabel(X_LABEL)
@@ -144,40 +149,44 @@ def animate(filename: str, save=False):
 UNIT_TIME = 1000  # in seconds
 LABEL_TIME = "ms"
 start_time = time.time()
-
+# print arguments input
+print('Argument List:', str(sys.argv))
 try:
     Lx = float(sys.argv[1])
     Ly = float(sys.argv[2])
+    vorticity = bool(int(sys.argv[3]))
 except IndexError:
     Lx = np.nan
     Ly = np.nan
+    vorticity = False
 try:
-    object = sys.argv[3]
+    object = sys.argv[4]
 except IndexError:
     object = ""
 
 if object == 'circle':
     try:
-        x0 = float(sys.argv[4])
-        y0 = float(sys.argv[5])
-        radius = float(sys.argv[6])
+        x0 = float(sys.argv[5])
+        y0 = float(sys.argv[6])
+        radius = float(sys.argv[7])
     except IndexError:
         x0 = np.nan
         y0 = np.nan
         radius = np.nan
 elif object == 'rectangle':
     try:
-        x0 = float(sys.argv[4])
-        y0 = float(sys.argv[5])
-        width = float(sys.argv[6])
-        height = float(sys.argv[7])
+        x0 = float(sys.argv[5])
+        y0 = float(sys.argv[6])
+        width = float(sys.argv[7])
+        height = float(sys.argv[8])
     except IndexError:
         x0 = np.nan
         y0 = np.nan
         x1 = np.nan
         y1 = np.nan
 
+print("Vorticity: ", vorticity)
 
-sol_u = 'data/u_solution.txt'
+sol_u = 'data/w_solution.txt' if vorticity else 'data/u_solution.txt'
 
 animate(sol_u)

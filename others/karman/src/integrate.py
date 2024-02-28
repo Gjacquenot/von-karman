@@ -2,7 +2,7 @@ import numpy as np
 from src import derive, projection_method, ibm, ip_op
 
 
-def rk3(u, v, nx, ny, nu, dx, dy, dt, dpdx, dpdy, epsilon, F, theta, r, R, rho, x, y, xx, yy, nx_sp, ny_sp, K, bc):
+def rk3(u, v, nx, ny, nu, dx, dy, dt, dpdx, dpdy, epsilon, theta, r, R, rho, x, y, xx, yy, nx_sp, ny_sp, K, bc):
 
 
     # Step1 with RK3
@@ -24,9 +24,9 @@ def rk3(u, v, nx, ny, nu, dx, dy, dt, dpdx, dpdy, epsilon, F, theta, r, R, rho, 
     uRHS = uRHS_conv_diff - dpdx
     vRHS = vRHS_conv_diff - dpdy
 
-    ibm_forcing_u, ibm_forcing_v = ibm.circle(uRHS, vRHS, u, v, dt, x, y, xx, yy, r, R, theta, nx, ny, F, epsilon)
+    ibm_forcing_u, ibm_forcing_v = ibm.circle(uRHS, vRHS, u, v, dt, x, y, xx, yy, r, R, theta, nx, ny, epsilon)
 
-    ustar = u + dt * uRHS + F * dt + ibm_forcing_u * dt
+    ustar = u + dt * uRHS + ibm_forcing_u * dt
     vstar = v + dt * vRHS + ibm_forcing_v * dt
 
     ustar[0, :] = 0

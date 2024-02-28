@@ -89,8 +89,8 @@ def BuildLAPN():
     offsets = np.array([-1, 0, 1])
     DXX = sp.dia_matrix((dataNXi, offsets), shape=(NXi, NXi)) * dx_2
     DYY = sp.dia_matrix((dataNYi, offsets), shape=(NYi, NYi)) * dy_2
-    print(DXX.todense())
-    print(DYY.todense())
+    # print(DXX.todense())
+    # print(DYY.todense())
 
     # 2D Laplace operator
     LAP = sp.kron(DXX, sp.eye(NYi, NYi)) + sp.kron(sp.eye(NXi, NXi), DYY)
@@ -185,17 +185,17 @@ def divergence(u, v):
 def VelocityGhostPoints(u, v):
     # NO SLIP BC
     # bottom
-    u[:, 0] = u[:, 1]
+    u[:, 0] = -u[:, 1]
     v[:, 0] = -v[:, 1]
     # top
-    u[:, -1] = u[:, -2]
+    u[:, -1] = 2 - u[:, -2]
     v[:, -1] = -v[:, -2]
-    # left
-    u[0, :] = 2 - u[1, :]
-    v[0, :] = -v[1, :]
     # right
-    u[-1, :] = u[-2, :]
-    v[-1, :] = v[-2, :]
+    u[0, :] = -u[1, :]
+    v[0, :] = -v[1, :]
+    # left
+    u[-1, :] = -u[-2, :]
+    v[-1, :] = -v[-2, :]
 
 
 def PhiGhostPoints(phi):
@@ -210,9 +210,9 @@ def PhiGhostPoints(phi):
     phi[:, 0] = phi[:, 1]
     # top
     phi[:, -1] = phi[:, -2]
-    # left
-    phi[0, :] = phi[1, :]
     # right
+    phi[0, :] = phi[1, :]
+    # left
     phi[-1, :] = phi[-2, :]
 
 
@@ -253,7 +253,6 @@ def Semilag(u, v, q):
     av = abs(v[1:-1, 1:-1])
 
 # Matrices of coefficients respectively central, external, same x, same y
-    # print(au)
     Cc = (dx - au * dt) * (dy - av * dt) / dx / dy
     Ce = dt * dt * au * av / dx / dy
     Cmx = (dx - au * dt) * av * dt / dx / dy
@@ -301,7 +300,7 @@ nx = NX - 2
 ny = NY - 2
 
 # Nombre d'iterations
-nitermax = int(20001)
+nitermax = int(10001)
 
 # Modulo
 modulo = int(1000)
@@ -362,15 +361,7 @@ LUPN = LUdecomposition(LAPN)
 ################
 # MAIN LOOP
 tStart = t
-# File path
-file_path = 'output.txt'
-with open(file_path, 'w+') as file:
-    file.write('')
-np.set_printoptions(threshold=np.inf, linewidth=1800)
 
-modulo2 = 1000
-write = False
-plot_ = not write
 for niter in range(nitermax):
 
     t += dt
@@ -381,34 +372,16 @@ for niter in range(nitermax):
     ADVu = Semilag2(u, v, u)
     ADVv = Semilag2(u, v, v)
 
-    # print u
-
-    # Save array to file
-    if (write and (niter + 1) % modulo2 == 0):
-        with open(file_path, 'a') as file:
-            file.write('\n\n time = %f\n' % (t))
-            file.write('\n\nadvected u\n')
-            print((ADVu), file=file)
-
     # Diffusion step
     ustar = ADVu + dt * Laplacien(u) / Re
     vstar = ADVv + dt * Laplacien(v) / Re
 
-    if (write and (niter + 1) % modulo2 == 0):
-        with open(file_path, 'a') as file:
-            file.write('\n\ndiffusion\n')
-            print((ustar), file=file)
-
     # Ghost points update
     VelocityGhostPoints(ustar, vstar)
 
-    if (write and (niter + 1) % modulo2 == 0):
-        with open(file_path, 'a') as file:
-            file.write('\n\nghost points\n')
-            print((ustar), file=file)
-
     # Update divstar
     divstar = divergence(ustar, vstar)
+    print(np.mean(divstar[1:-1, 1:-1]))
     divstar = divstar - np.mean(divstar[1:-1, 1:-1])
 
     # Solving the linear system
@@ -425,23 +398,12 @@ for niter in range(nitermax):
     u = ustar - gradphix
     v = vstar - gradphiy
 
-    # u = ustar
-    # v = vstar
-
     # Mise a jour des points fantomes
-    # pour le champ de vitesse et T, 'a') as file:
-    #     file.write('final v (same as before if there is  no pressure)\n')
-    #     np.savetxt(file_path,
+    # pour le champ de vitesse et T
 
     VelocityGhostPoints(u, v)
 
-    if (write and (niter + 1) % modulo2 == 0):
-        with open(file_path, 'a') as file:
-            file.write(
-                '\n\nfinal u (same as before if there is  no pressure)\n')
-            print((u), file=file)
-
-    if (plot_ and (niter + 1) % modulo == 0):
+    if ((niter + 1) % modulo == 0):
 
         # logfile
         sys.stdout.write(
@@ -457,13 +419,8 @@ for niter in range(nitermax):
         plotlabel = "t = %1.5f" % (t)
         plt.clf()
         plt.title(plotlabel)
-        # plt.quiver(xx, yy, np.transpose(
-        # u[1:-1, 1:-1]), np.transpose(v[1:-1, 1:-1]), 4)
-        # heatmap
-        plt.pcolor(xx, yy, np.transpose(u[1:-1, 1:-1]), vmax=5, vmin=0)
-        # add colorbar (fixed limits between 0 and 1)
-        plt.colorbar()
-
+        plt.quiver(xx, yy, np.transpose(
+            u[1:-1, 1:-1]), np.transpose(v[1:-1, 1:-1]), 4)
         plt.axis('image')
         plt.draw()
-        plt.pause(0.01)
+        plt.pause(0.1)

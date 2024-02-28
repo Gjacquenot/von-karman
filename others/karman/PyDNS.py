@@ -12,7 +12,7 @@ def PyDNS(file_path):
     if os.path.exists(folder_path):
         shutil.rmtree(folder_path)
     os.makedirs(folder_path)
-
+    dt = 0.005
     # variable declarations
     x = np.arange(xmin, xmax, dx)
     nx = len(x)
@@ -24,7 +24,7 @@ def PyDNS(file_path):
 
     # That needs to be fixed
 
-    F = 0  # 0.0001
+    F = 0
     dt = 0.015
 
     # physical variables
@@ -61,7 +61,7 @@ def PyDNS(file_path):
     r = ((xx - lx / 4) ** 2 + (yy - ly / 2) ** 2) ** 0.5
     theta = np.arctan2(yy - ly / 2, xx - lx / 4)
 
-    R = 0.5
+    R = -0.5
 
     for i in range(nx):
         for j in range(ny):
@@ -86,10 +86,10 @@ def PyDNS(file_path):
     # rk3
     ts = [0]
     for stepcount in range(1, 3):
-        ts.append(ts[-1] + 0.015)
+        ts.append(ts[-1] + dt)
         u, v, p = projection_method.BC(u, v, p)
         u, v, dpdx, dpdy, uRHS_conv_diff, vRHS_conv_diff = integrate.rk3(u, v, nx, ny, nu, dx, dy, dt, dpdx, dpdy,
-                                                                         epsilon, F, theta, r, R,
+                                                                         epsilon, theta, r, R,
                                                                          rho, x, y, xx, yy,
                                                                          nx_sp, ny_sp, K, bc)
 
@@ -114,10 +114,10 @@ def PyDNS(file_path):
         if ts[-1] + 0.015 > t_end:
             ts.append(t_end)
         else:
-            ts.append(ts[-1] + 0.015)
+            ts.append(ts[-1] + dt)
         u, v, p = projection_method.BC(u, v, p)
         ustar, vstar, uRHS_conv_diff, vRHS_conv_diff = projection_method.step1(u, v, nx, ny, nu, x, y, xx, yy, dx, dy,
-                                                                               dt, epsilon, F, R, theta, r,
+                                                                               dt, epsilon, R, theta, r,
                                                                                uRHS_conv_diff_p, uRHS_conv_diff_pp,
                                                                                vRHS_conv_diff_p, vRHS_conv_diff_pp,
                                                                                dpdx, dpdy, bc)
@@ -126,7 +126,6 @@ def PyDNS(file_path):
         ustarstar, vstarstar = projection_method.step2(
             ustar, vstar, dpdx, dpdy, dt)
         ustarstar, vstarstar, p = projection_method.BC(ustarstar, vstarstar, p)
-
         # Step3
         p = projection_method.step3(
             ustarstar,
@@ -185,7 +184,7 @@ if __name__ == "__main__":
     from urllib import request
 
     if len(sys.argv) != 2:
-        print("Usage: python main_simulation.py setup_script.txt")
+        print("Usage: python PyDNS.py setup_script.txt")
         sys.exit(1)
 
     setup_script = sys.argv[1]
