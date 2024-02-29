@@ -22,9 +22,10 @@ Z_LABEL = 'z'
 FONTSIZE_TIME = 10
 y_pos_text = 1.03
 y_pos_title = y_pos_text + 0.14
-color = cm['RdBu_r']  # RdBu reversed
 colorbar_args = {'shrink': 0.5, 'aspect': 10, 'location': 'left'}
 duration = 10  # duration of the animation in seconds
+cols_removed_beginning = 0
+cols_removed_end = 20
 
 
 def animate(filename: str, save=False):
@@ -48,13 +49,22 @@ def animate(filename: str, save=False):
     print("Expected duration: ", duration)
 
     # Create data
+    nx_old = data_blocks.shape[1]
+    ny_old = data_blocks.shape[2]
+
+    # delete the first cols_removed_beginning and last cols_removed_end columns
+    data_blocks = np.delete(data_blocks, range(cols_removed_beginning), axis=1)
+    data_blocks = np.delete(data_blocks, range(-cols_removed_end, 0), axis=1)
+
+    # Create data
     nx = data_blocks.shape[1]
     ny = data_blocks.shape[2]
 
-    dx = Lx / nx
-    dy = Ly / ny
+    dx = Lx / nx_old
+    dy = Ly / ny_old
 
-    X = np.linspace(dx / 2, Lx - dx / 2, nx)
+    X = np.linspace(dx / 2 * (1 + cols_removed_beginning),
+                    Lx - dx / 2 * (1 + cols_removed_end), nx)
     Y = np.linspace(dy / 2, Ly - dy / 2, ny)
     X, Y = np.meshgrid(X, Y, indexing='xy')
 
@@ -67,24 +77,30 @@ def animate(filename: str, save=False):
     Z = data_blocks[0]
     Z_MAX = np.max(data_blocks)
     Z_MIN = np.min(data_blocks)
+    if vorticity:
+        # the division by 2 is to make the colors more visible
+        Z_MAX = max(Z_MAX, -Z_MIN) / 2
+        Z_MIN = -Z_MAX
+    # concentrate more strong colors (red and blue) on lower values
+    color = cm['RdBu_r'] if vorticity else cm['inferno']
     plot_args = {
         'cmap': color,
         'extent': [
-            0,
-            Lx,
+            dx * cols_removed_beginning,
+            Lx - dx * cols_removed_end,
             0,
             Ly],
         'vmin': Z_MIN,
         'vmax': Z_MAX,
+        # 'interpolation': 'none'}
         'interpolation': 'spline16'}
-    # 'interpolation': 'none'}
     text_args = {'x': 0.5, 'y': y_pos_text, 's': '', 'transform': ax.transAxes,
                  'fontsize': FONTSIZE_TIME, 'horizontalalignment': 'center'}
     time_text = ax.text(**text_args)
 
-    # set title
+    # set title (omega or sqrt(u^2 + v^2)
     ax.set_title(
-        'voriticity' if vorticity else 'sqrt(u^2 + v^2)',
+        r'$\omega$' if vorticity else r'$\sqrt{u^2 + v^2}$',
         y=y_pos_title)
 
     # Axes
@@ -94,10 +110,17 @@ def animate(filename: str, save=False):
     # plot a circle
     if object != "":
         if object == 'circle':
-            obstacle = Circle((x0, y0), radius, color='r', fill=False)
+            if vorticity:
+                obstacle = Circle((x0, y0), radius, color='black', fill=True)
+            else:
+                obstacle = Circle((x0, y0), radius, color='w', fill=False)
         elif object == 'rectangle':
-            obstacle = Rectangle(
-                (x0, y0), width, height, color='r', fill=False)
+            if vorticity:
+                obstacle = Rectangle(
+                    (x0 - width / 2, y0 - height / 2), width, height, color='black', fill=True)
+            else:
+                obstacle = Rectangle(
+                    (x0 - width / 2, y0 - height / 2), width, height, color='w', fill=False)
         # Add the circle to the plot
         ax.add_artist(obstacle)
 
@@ -149,8 +172,10 @@ def animate(filename: str, save=False):
 UNIT_TIME = 1000  # in seconds
 LABEL_TIME = "ms"
 start_time = time.time()
-# print arguments input
-print('Argument List:', str(sys.argv))
+
+# print the arguments
+# print("Arguments: ", sys.argv)
+
 try:
     Lx = float(sys.argv[1])
     Ly = float(sys.argv[2])
@@ -182,8 +207,8 @@ elif object == 'rectangle':
     except IndexError:
         x0 = np.nan
         y0 = np.nan
-        x1 = np.nan
-        y1 = np.nan
+        width = np.nan
+        height = np.nan
 
 print("Vorticity: ", vorticity)
 

@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+// auxiliary macros to access the fields
 #define U(i, j) u[(i) * prm.NY + (j)]
 #define V(i, j) v[(i) * prm.NY + (j)]
 #define W(i, j) w[(i) * prm.NY + (j)]
@@ -16,22 +17,22 @@
 #define y(j) (-0.5 * prm.dy + (j) * prm.dy)
 
 typedef struct prm {
-  int NX;
-  int NY;
-  int nx;
-  int ny;
-  double LX;
-  double LY;
-  double dt;
-  double dx;
-  double dy;
-  double U;
-  double L;
-  double nu;
-  double Re;
-  size_t NXNY;
-  size_t nxny;
-  bool obstacle_ON;
+  int NX;            // number of points in the x direction (including the ghost points)
+  int NY;            // number of points in the y direction (including the ghost points)
+  int nx;            // number of points in the x direction (excluding the ghost points)
+  int ny;            // number of points in the y direction (excluding the ghost points)
+  double LX;         // length of the domain in the x direction
+  double LY;         // length of the domain in the y direction
+  double dt;         // time step
+  double dx;         // grid spacing in the x direction
+  double dy;         // grid spacing in the y direction
+  double U;          // characteristic velocity
+  double L;          // characteristic length
+  double nu;         // kinematic viscosity
+  double Re;         // Reynolds number
+  size_t NXNY;       // total number of points in the domain (including the ghost points)
+  size_t nxny;       // total number of points in the domain (excluding the ghost points)
+  bool obstacle_ON;  // true if there is an obstacle in the domain, false otherwise
 } Prm;
 
 #endif  // MISC_HPP

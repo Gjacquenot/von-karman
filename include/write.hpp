@@ -10,22 +10,10 @@
 
 using namespace std;
 
-// template <typename... Args>
-
-// // @brief Write the arguments to a temporary file
-// // @param args arguments to be written to the file
-// void write_tmp_file(Args... args) {
-//   std::ofstream file_tmp;
-//   file_tmp.open("data/tmp_animation.txt");
-//   // write all the arguments to the file one by one (separated by a space)
-//   for (auto &&i : {args...}) {
-//     file_tmp << i << " ";
-//   }
-//   // (file_tmp << ... << args) << std::endl;
-//   file_tmp.close();
-// }
 template <typename... Args>
 
+// @brief Write the arguments to a temporary file
+// @param args arguments to be written to the file
 void write_tmp_file(Args... args) {
   ofstream file;
   file.open("data/tmp_animation.txt");
@@ -70,53 +58,36 @@ void print(string str, int64_t time) {
   return;
 }
 
-// @brief Write the euclidean norm of the solution to a file
+// @brief Write the euclidean norm of the velocity field to a file
 // @param file file to write the solution
 // @param u velocity in x direction
 // @param v velocity in y direction
 // @param t time at which the solution is written
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
-void write_sol(ofstream &file, double *u, double *v, double t, Prm prm, bool ghost) {
+void write_sol(ofstream &file, double *u, double *v, double t, Prm prm) {
   file << t << endl;
-  if (ghost) {
-    for (int i = 0; i < prm.NX; i++) {
-      for (int j = 0; j < prm.NY; j++) {
-        file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
-        // file << U(i, j) << " ";
-      }
-      file << endl;
-    }
-    file << endl;
-  } else {
-    for (int i = 1; i < prm.NX - 1; i++) {
-      for (int j = 1; j < prm.NY - 1; j++) {
-        // file << V(i, j) << " ";
-        file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
-      }
-      file << endl;
+  for (int i = 1; i < prm.NX - 1; i++) {
+    for (int j = 1; j < prm.NY - 1; j++) {
+      file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
     }
     file << endl;
   }
+  file << endl;
 }
 
-void write_sol_w(ofstream &file, double *w, double t, Prm prm, bool ghost) {
+// @brief Write the vorticity field to a file
+// @param file file to write the solution
+// @param w vorticity
+// @param t time at which the solution is written
+// @param prm parameters of the simulation (dx, dy, dt, etc.)
+void write_sol_w(ofstream &file, double *w, double t, Prm prm) {
   file << t << endl;
-  if (ghost) {
-    for (int i = 0; i < prm.NX; i++) {
-      for (int j = 0; j < prm.NY; j++) {
-        file << W(i, j) << " ";
-      }
-      file << endl;
-    }
-    file << endl;
-  } else {
-    for (int i = 1; i < prm.NX - 1; i++) {
-      for (int j = 1; j < prm.NY - 1; j++) {
-        file << W(i, j) << " ";
-      }
-      file << endl;
+  for (int i = 1; i < prm.NX - 1; i++) {
+    for (int j = 1; j < prm.NY - 1; j++) {
+      file << W(i, j) << " ";
     }
     file << endl;
   }
+  file << endl;
 }
 #endif  // WRITE_HPP

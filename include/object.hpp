@@ -3,38 +3,46 @@
 
 #include <cmath>
 #include <iostream>
+#include <string>
 
 #include "misc.hpp"
 
 using namespace std;
 
+// @brief Structure representing a point in the domain
 typedef struct point {
-  double x;
-  double y;
+  double x;  // x coordinate of the point
+  double y;  // y coordinate of the point
 } Point;
 
+// @brief Structure representing a point in the domain (with integer coordinates -> grid number)
 typedef struct grid {
-  int i;
-  int j;
+  int i;  // x index of the point
+  int j;  // y index of the point
 } Grid;
 
 #define TOL 1e-8
 
 class Object {
  public:
-  bool* IsInside;       // 1 if the point is inside the object, 0 otherwise.
-  bool* IsGhost;        // 1 if the point is a ghost point, 0 otherwise.
-  bool* IsForcing;      // 1 if the point is on the interface (fluid point and just next to a ghost point), 0 otherwise. These are the points where the forcing term is applied.
-  Grid* GhostPoints;    // Array of points that are just inside the object.
-  Point* MirrorPoints;  // Array of points that are mirrored by the object from the ghost points.
+  bool* IsInside;         // 1 if the point is inside the object, 0 otherwise.
+  bool* IsGhost;          // 1 if the point is a ghost point, 0 otherwise.
+  bool* IsInterface;      // 1 if the point is on the interface (fluid point and just next to a ghost point), 0 otherwise. These are the points where the forcing term is applied.
+  Grid* GhostPoints;      // Array of points that are just inside the object.
+  Point* BoundaryPoints;  // Array of points that are on the boundary of the object.
+  Point* MirrorPoints;    // Array of points that are mirrored by the object from the ghost points.
   // create a matrix of 6 interpolating points for each ghost point
   Grid* InterpolatingPoints;  // Array of points that are used to interpolate any quantity (velocity u, velocity v or pressure) at the mirror points.
-  int count_ghost;
+  int count_ghost;            // Number of ghost points
+  string data;                // Data of the object (used to write the main characteristics of the object to a file)
 
+  // @brief Initialize the object
+  // @param prm parameters of the simulation (dx, dy, dt, etc.)
   void init(Prm prm) {
     IsInside = new bool[prm.NX * prm.NY];
     IsGhost = new bool[prm.NX * prm.NY];
-    IsForcing = new bool[prm.NX * prm.NY];
+    IsInterface = new bool[prm.NX * prm.NY];
+    BoundaryPoints = new Point[prm.NX * prm.NY];
     int count_gh = 0;
     for (int i = 0; i < prm.NX; i++) {
       for (int j = 0; j < prm.NY; j++) {
@@ -48,6 +56,7 @@ class Object {
         } else {
           IsGhost[i * prm.NY + j] = false;
         }
+        BoundaryPoints[i * prm.NY + j] = closest_boundary_point(x(i), y(j));
       }
     }
     this->count_ghost = count_gh;
@@ -66,29 +75,49 @@ class Object {
       }
     }
 
-    // set the IsForcing array
+    // set the IsInterface array
     for (int i = 0; i < prm.NX; i++) {
       for (int j = 0; j < prm.NY; j++) {
-        IsForcing[i * prm.NY + j] = false;
+        IsInterface[i * prm.NY + j] = false;
         if (!IsInside[i * prm.NY + j]) {
           if (is_inside(i - 1, j, prm) || is_inside(i + 1, j, prm) || is_inside(i, j - 1, prm) || is_inside(i, j + 1, prm)) {
-            IsForcing[i * prm.NY + j] = 7;
+            IsInterface[i * prm.NY + j] = 7;
           }
         }
       }
     }
+    set_data();
   }
 
-  // checks if a point is inside the boundary
+  // @brief Check if a point (x, y) is inside the object
+  // @param i x index of the point
+  // @param j y index of the point
+  // @param prm parameters of the simulation (dx, dy, dt, etc.)
+  // @return true if the point is inside the object, false otherwise
   virtual bool is_inside(int i, int j, Prm prm) = 0;
 
+  // @brief Find the closest point on the boundary of the object to a given point (x, y)
+  // @param x x coordinate of the point
+  // @param y y coordinate of the point
+  // @return the closest point on the boundary of the object to the given point
   virtual Point closest_boundary_point(double x, double y) = 0;
 
+  // @brief Set the data of the object (used to write the main characteristics of the object to a file)
+  virtual void set_data() = 0;
+
+  // @brief Find the mirror point of a given point (x, y) with respect to the object
+  // @param x x coordinate of the point
+  // @param y y coordinate of the point
+  // @return the mirror point of the given point with respect to the object
   Point mirror_point(double x, double y) {
     Point p = closest_boundary_point(x, y);
     return {2 * p.x - x, 2 * p.y - y};
   }
 
+  // @brief Find the sign of the difference between x and the x coordinate of the mirror point
+  // @param x x coordinate of the point
+  // @param mirror_x x coordinate of the mirror point
+  // @return 1 if mirror_x - x > 0, -1 if mirror_x - x < 0, 0 otherwise
   int sign_nx(double x, double mirror_x) {
     if (mirror_x - x > TOL) {
       return 1;
@@ -99,6 +128,10 @@ class Object {
     }
   }
 
+  // @brief Find the sign of the difference between y and the y coordinate of the mirror point
+  // @param y y coordinate of the point
+  // @param mirror_y y coordinate of the mirror point
+  // @return 1 if mirror_y - y > 0, -1 if mirror_y - y < 0, 0 otherwise
   int sign_ny(double y, double mirror_y) {
     if (mirror_y - y > TOL) {
       return 1;
@@ -109,6 +142,12 @@ class Object {
     }
   }
 
+  // @brief Set the interpolating points for a given ghost point
+  // @param i x index of the ghost point
+  // @param j y index of the ghost point
+  // @param mirror the mirror point of the ghost point
+  // @param count index of the ghost point in the GhostPoints array
+  // @param prm parameters of the simulation (dx, dy, dt, etc.)
   void set_interpolating_points(int i, int j, Point mirror, int count, Prm prm) {
     // based on algorithm of the paper: High order ghost-cell immersed boundary method for generalized boundary conditions (by Mehrdad Yousefzadeh, Ilenia Battiato), p. 589-590
 
@@ -201,6 +240,10 @@ class Circle : public Object {
     double d = sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0));
     return {x0 + R * (x - x0) / d, y0 + R * (y - y0) / d};
   }
+
+  void set_data() override {
+    data = to_string(x0) + " " + to_string(y0) + " " + to_string(R);
+  }
 };
 
 class Rectangle : public Object {
@@ -226,6 +269,10 @@ class Rectangle : public Object {
     } else {
       return {x, (y > y0) ? y0 + Ly / 2 : y0 - Ly / 2};
     }
+  }
+
+  void set_data() override {
+    data = to_string(x0) + " " + to_string(y0) + " " + to_string(Lx) + " " + to_string(Ly);
   }
 };
 
