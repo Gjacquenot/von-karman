@@ -78,7 +78,7 @@ int main(void) {
   cout << "T:             " << space << T << endl;
   cout << "Re:            " << space << prm.Re << endl;
   cout << "U:             " << space << prm.U << endl;
-  cout << "Obstacle?      " << space << (prm.obstacle_ON ? "yes" : "no") << endl;
+  cout << "Obstacle?      " << space << (prm.obstacle_ON ? "yes, " + object_type : "no") << endl;
   cout << "Vorticity?     " << space << (vorticity ? "yes" : "no") << endl;
   cout << "Plot animation?" << space << (animation ? "yes" : "no") << endl;
   // ------------------------------------------------
@@ -115,6 +115,10 @@ int main(void) {
     obstacle = new Circle(prm.LX / 8, prm.LY / 2, prm.L / 2, prm);  // L is the diameter of the circle
   } else if (object_type == "rectangle") {
     obstacle = new Rectangle(prm.LX / 8, prm.LY / 2, prm.L, prm.L, prm);  // L is the side of the square
+  } else if (object_type == "mountain") {
+    obstacle = new Mountain(0.7, 0.9, 0.2, 3.1, prm);
+  } else if (object_type == "airfoil") {
+    obstacle = new Airfoil(0.17814, -0.0756, -0.21096, 0.17058, -0.0609, prm.LX / 8, prm.LY / 2, prm);
   } else {
     cout << "Object type not recognized" << endl;
     return 1;
@@ -148,6 +152,10 @@ int main(void) {
   double max_u_v = 0, lap, rhs_u, rhs_v;
 
   while (t < T - EPS) {
+    if (prm.dt < EPS) {
+      cout << "Time step too small. Exiting." << endl;
+      return 1;
+    }
     // adaptative time step
     for (int i = 0; i < prm.NXNY; i++) {
       max_u_v = max(max_u_v, max(abs(u[i]), abs(v[i])));
@@ -256,14 +264,14 @@ int main(void) {
       // linear interpolation on the outer discrete boundary of the object to smooth the boundary jump values.
       memcpy(ustar, u, prm.NXNY * sizeof(double));
       memcpy(vstar, v, prm.NXNY * sizeof(double));
-      for (int i = 1; i < prm.NX - 1; i++) {
-        for (int j = 1; j < prm.NY - 1; j++) {
-          if (prm.obstacle_ON && obstacle->IsInterface[i * prm.NY + j]) {
-            Ustar(i, j) = interpolate(i, j, ustar, prm, *obstacle);
-            Vstar(i, j) = interpolate(i, j, vstar, prm, *obstacle);
-          }
-        }
-      }
+      // for (int i = 1; i < prm.NX - 1; i++) {
+      //   for (int j = 1; j < prm.NY - 1; j++) {
+      //     if (prm.obstacle_ON && obstacle->IsInterface[i * prm.NY + j]) {
+      //       Ustar(i, j) = interpolate(i, j, ustar, prm, *obstacle);
+      //       Vstar(i, j) = interpolate(i, j, vstar, prm, *obstacle);
+      //     }
+      //   }
+      // }
       set_vorticity(ustar, vstar, w, prm);
       write_sol_w(file_output_w, w, t, prm);
       write_sol(file_output_u, ustar, vstar, t, prm);

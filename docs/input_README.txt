@@ -9,6 +9,6 @@ Lscale                  Length scale of the problem. Positive real number.
 nu                      Kinematic viscosity of the fluid. Positive real number.
 vorticity               Whether to plot the vorticity or not. Boolean: 1 (yes) or 0 (no).
 obstacle                Whether to include an obstacle in the domain or not. Boolean: 1 (yes) or 0 (no).
-object                  Type of obstacle. String: "circle", "rectangle" or "airfoil".
+object                  Type of obstacle. String: "circle", "rectangle", "mountain" or "airfoil".
 animation               Whether to animate the solution or not. Boolean: 1 (yes) or 0 (no).
 animation_dt            Time step for the animation (print solution each animation_dt time-steps). Positive integer.

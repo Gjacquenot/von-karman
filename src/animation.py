@@ -114,6 +114,7 @@ def animate(filename: str, save=False):
                 obstacle = Circle((x0, y0), radius, color='black', fill=True)
             else:
                 obstacle = Circle((x0, y0), radius, color='w', fill=False)
+            ax.add_artist(obstacle)
         elif object == 'rectangle':
             if vorticity:
                 obstacle = Rectangle(
@@ -121,9 +122,35 @@ def animate(filename: str, save=False):
             else:
                 obstacle = Rectangle(
                     (x0 - width / 2, y0 - height / 2), width, height, color='w', fill=False)
-        # Add the circle to the plot
-        ax.add_artist(obstacle)
+            ax.add_artist(obstacle)
+        elif object == 'mountain':
+            # mountain is the 1D function f(x) = y0 - sqrt(lambda^2 (x - x0)^2
+            # + h)
+            if vorticity:
+                obstacle = ax.plot(X[0],
+                                   y0 - np.sqrt(lamb**2 * (X[0] - x0)**2 + h),
+                                   color='black')
+            else:
+                obstacle = ax.plot(X[0],
+                                   y0 - np.sqrt(lamb**2 * (X[0] - x0)**2 + h),
+                                   color='w')
+        elif object == 'airfoil':
+            # airfoil is the 1D function f(x) = y0 + a * sqrt(x - x0) + b * (x
+            # - x0) + c * (x - x0)^2 + d * (x - x0)^3 + e * (x - x0)^4
+            XX = np.linspace(x0, x0 + 1, nx)
+            if vorticity:
+                obstacle = ax.plot(XX,
+                                   y0 + a * np.sqrt(XX - x0) + b * (XX - x0) + c * (
+                                       XX - x0)**2 + d * (XX - x0)**3 + e * (XX - x0)**4,
+                                   color='black') + ax.plot(XX, y0 - a * np.sqrt(XX - x0) - b * (XX - x0) - c * (
+                                       XX - x0)**2 - d * (XX - x0)**3 - e * (XX - x0)**4, color='black')
 
+            else:
+                obstacle = ax.plot(XX,
+                                   y0 + a * np.sqrt(XX - x0) + b * (XX - x0) + c * (
+                                       XX - x0)**2 + d * (XX - x0)**3 + e * (XX - x0)**4,
+                                   color='w') + ax.plot(XX, y0 - a * np.sqrt(XX - x0) - b * (XX - x0) - c * (
+                                       XX - x0)**2 - d * (XX - x0)**3 - e * (XX - x0)**4, color='w')
     # Create plot
     plot = [ax.imshow(Z, **plot_args)]
 
@@ -209,8 +236,34 @@ elif object == 'rectangle':
         y0 = np.nan
         width = np.nan
         height = np.nan
-
-print("Vorticity: ", vorticity)
+elif object == "mountain":
+    try:
+        x0 = float(sys.argv[5])
+        y0 = float(sys.argv[6])
+        h = float(sys.argv[7])
+        lamb = float(sys.argv[8])
+    except IndexError:
+        x0 = np.nan
+        y0 = np.nan
+        h = np.nan
+        lamb = np.nan
+elif object == "airfoil":
+    try:
+        a = float(sys.argv[5])
+        b = float(sys.argv[6])
+        c = float(sys.argv[7])
+        d = float(sys.argv[8])
+        e = float(sys.argv[9])
+        x0 = float(sys.argv[10])
+        y0 = float(sys.argv[11])
+    except IndexError:
+        a = np.nan
+        b = np.nan
+        c = np.nan
+        d = np.nan
+        e = np.nan
+        x0 = np.nan
+        y0 = np.nan
 
 sol_u = 'data/w_solution.txt' if vorticity else 'data/u_solution.txt'
 

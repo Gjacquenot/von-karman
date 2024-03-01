@@ -92,7 +92,7 @@ double interpolate(int i, int j, double* phi, Prm prm, Object& obstacle) {
   for (int k = 0; k < 3; k++) {
     for (int m = 0; m < 3; m++) {
       if (obstacle.IsInterface[(I + k) * prm.NY + J + m]) continue;
-      if (obstacle.IsInside[(I + k) * prm.NY + J + m]) {
+      if (obstacle.IsGhost[(I + k) * prm.NY + J + m]) {
         // in this case we use the boundary value
         dx = x - obstacle.BoundaryPoints[(I + k) * prm.NY + J + m].x;
         dy = y - obstacle.BoundaryPoints[(I + k) * prm.NY + J + m].y;

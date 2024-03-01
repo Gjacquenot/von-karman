@@ -276,4 +276,107 @@ class Rectangle : public Object {
   }
 };
 
+class Mountain : public Object {
+  // function defined by:
+  // f(x) = y0 - sqrt(lambda^2 (x - x0)^2 + h)
+
+ public:
+  double x0, y0, h, lambda;
+  Mountain(double x0_, double y0_, double h_, double lambda_, Prm prm) : x0(x0_), y0(y0_), h(h_), lambda(lambda_) {
+    init(prm);
+  }
+
+  bool is_inside(int i, int j, Prm prm) override {
+    if (y(j) < 0) {
+      return false;
+    }
+    return y(j) < y0 - sqrt(lambda * lambda * (x(i) - x0) * (x(i) - x0) + h);
+  }
+
+  Point closest_boundary_point(double x, double y) override {
+    // we do linear interpolation to find the closest point on the boundary
+    // horizontal distance to the boundary
+    double X11 = sqrt((y - y0) * (y - y0) - h) / lambda + x0;
+    double X12 = -sqrt((y - y0) * (y - y0) - h) / lambda + x0;
+    double X1 = (abs(x - X11) < abs(x - X12)) ? X11 : X12;
+    double Y1 = y0;
+    double X2 = x0;
+    double Y2 = y0 - sqrt(lambda * lambda * (x - x0) * (x - x0) + h);
+    // line equation from (X1, Y1) to (X2, Y2) is g(X) = Y1 + m * (X - X1)
+    // perpendicular line passing through (x, y) is h(X) = y - (X - x) / m
+    // we solve g(X) = h(X) to find the closest point
+    double m = (Y2 - Y1) / (X2 - X1);
+    double X = (m * m * X1 + x + m * y - m * Y1) / (m * m + 1);
+    double Y = Y1 + m * (X - X1);
+    return {X, Y};
+  }
+
+  void set_data() override {
+    data = to_string(x0) + " " + to_string(y0) + " " + to_string(h) + " " + to_string(lambda);
+  }
+};
+
+class Airfoil : public Object {
+  // equation for the upper part of the airfoil:
+  // f(x) = y0 + a * sqrt(x - x0) + b * (x - x0) + c * (x - x0)^2 + d * (x - x0)^3 + e * (x - x0)^4
+  // equation for the lower part of the airfoil:
+  // f(x) = 2 * y0 - f(x)
+ public:
+  double a, b, c, d, e, x0, y0;
+  double dx;
+  const double length = 1.0;
+  Airfoil(double a_, double b_, double c_, double d_, double e_, double x0_, double y0_, Prm prm) : a(a_), b(b_), c(c_), d(d_), e(e_), x0(x0_), y0(y0_) {
+    init(prm);
+    this->dx = prm.dx;
+  }
+
+  bool is_inside(int i, int j, Prm prm) override {
+    if (x(i) < x0 || x(i) > x0 + length) {
+      return false;
+    }
+    double Y = f(x(i));
+    if (y(j) > Y || y(j) < 2 * y0 - Y) {
+      return false;
+    }
+    return true;
+  }
+
+  double f(double x) {
+    return y0 + a * sqrt(x - x0) + b * (x - x0) + c * (x - x0) * (x - x0) + d * (x - x0) * (x - x0) * (x - x0) + e * (x - x0) * (x - x0) * (x - x0) * (x - x0);
+  }
+
+  Point closest_boundary_point(double x, double y) override {
+    // we do linear interpolation to find the closest point on the boundary
+    // horizontal distance to the boundary
+    double X11 = x, X12, Y1 = y, yaux1, yaux2;
+    yaux1 = f(X11);
+    double dx_small = dx / 10;  // only valid for points near boundary
+    // get the closest X1 to the airfoil in the level y = Y1
+    int sign = (x > x0 + length / 2) ? 1 : -1;
+    for (int i = 0; i <= 10; i++) {
+      X12 = X11 + sign * dx_small;
+      yaux2 = f(X12);
+      if (yaux1 < Y1 && yaux2 > Y1) {
+        break;
+      }
+    }
+    // linear interpolation
+    double m = (yaux2 - yaux1) / (X12 - X11);
+    double X1 = (Y1 - yaux1) / m + X11;
+    double X2 = x;
+    double Y2 = f(x);
+    // line equation from (X1, Y1) to (X2, Y2) is g(X) = Y1 + m * (X - X1)
+    // perpendicular line passing through (x, y) is h(X) = y - (X - x) / m
+    // we solve g(X) = h(X) to find the closest point
+    m = (Y2 - Y1) / (X2 - X1);
+    double X = (m * m * X1 + x + m * y - m * Y1) / (m * m + 1);
+    double Y = Y1 + m * (X - X1);
+    return {X, Y};
+  }
+
+  void set_data() override {
+    data = to_string(a) + " " + to_string(b) + " " + to_string(c) + " " + to_string(d) + " " + to_string(e) + " " + to_string(x0) + " " + to_string(y0);
+  }
+};
+
 #endif  // OBJECT_HPP
