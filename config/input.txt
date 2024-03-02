@@ -4,7 +4,7 @@ nx 500
 ny 100
 dt 0.001
 Tfinal 20
-Re 175
+Re 500
 Lscale 0.25
 nu 1.506e-5
 vorticity 0
