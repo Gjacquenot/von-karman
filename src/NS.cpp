@@ -213,7 +213,7 @@ void buildPoissonMatrix(vector<Trip>& coeffs, Prm prm) {
   // ||                                                               |               1 -1 ||
   // ||------------------------------------------------------------------------------------||
 
-  // number of non-zero coefficients in the Laplace matrix
+  // number of non-zero coefficients in the Poi matrix
   // dx -> 3 * ny * (nx - 2) + 2 * (2 * ny) = ny * (3 * nx - 2)
   // dy -> (3 * ny - 2) * nx
   // common (diag) -> nx * ny

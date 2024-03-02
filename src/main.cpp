@@ -5,6 +5,9 @@
 #include <iostream>
 #include <vector>
 
+// hdf5 library
+#include <H5Cpp.h>
+
 #include "../include/NS.hpp"
 #include "../include/misc.hpp"
 #include "../include/object.hpp"
@@ -19,21 +22,19 @@ using namespace Eigen;
 #define END_TIMER() end = chrono::steady_clock::now()
 #define ADD_TIME_TO(x) x += chrono::duration_cast<chrono::microseconds>(end - begin).count()
 
-#define WRITE_ANIM() ((animation) && (t - EPS < (anim_count + 1) * anim_dt) && (t + prm.dt - EPS > (anim_count + 1) * anim_dt))
+#define WRITE_ANIM() ((t - EPS < (plot_count + 1) * plot_dt) && (t + prm.dt - EPS > (plot_count + 1) * plot_dt))
 
 int main(void) {
-  const string filename_solution_u = "data/u_solution.txt";  // name of the output file to write the solution (module of the velocity)
-  const string filename_solution_w = "data/w_solution.txt";  // name of the output file to write the solution (vorticity)
-  const string filename_input = "data/input.txt";            // name of the input file to read the parameters
-  const string space = "    ";                               // space to print
-  const uint per = 10;                                       // progress percentage interval to print (each count%)
+  const string filename_input = "config/input.txt";  // name of the input file to read the parameters
+  const string space = "    ";                       // space to print
+  const uint per = 10;                               // progress percentage interval to print (each count%)
   uint count = per;
   Prm prm;
   double T;             // final time of the simulation
   bool animation;       // flag to enable or disable the animation
   bool vorticity;       // flag to enable or disable plotting the vorticity
-  double anim_dt;       // frequency to write the animation file
-  uint anim_count = 0;  // counter to write the animation file
+  double plot_dt;       // frequency to write the animation file
+  uint plot_count = 0;  // counter to write the animation file
   string object_type;   // type of object to simulate
   int64_t total_files = 0, total_advection = 0, total_diffusion = 0,
           total_others = 0, total_build_poisson = 0, total_solve_laplace = 0,
@@ -43,7 +44,6 @@ int main(void) {
   // ------------- File input setup ----------------
   START_TIMER();
   ifstream file_input;
-  ofstream file_output_u, file_output_w;
   file_input.open(filename_input);
   string tmp;
   if (file_input.is_open()) {
@@ -59,8 +59,8 @@ int main(void) {
     file_input >> tmp >> vorticity;
     file_input >> tmp >> prm.obstacle_ON;
     file_input >> tmp >> object_type;
+    file_input >> tmp >> plot_dt;
     file_input >> tmp >> animation;
-    file_input >> tmp >> anim_dt;
   }
   file_input.close();
 
@@ -89,22 +89,44 @@ int main(void) {
   double fraction_completed = T / 100.;  // fraction of the integration time to print
 
   // allocate memory
-  double* u = (double*)calloc(prm.NXNY, sizeof(double));      // x component of velocity, initialized to 0 by calloc
-  double* ustar = (double*)calloc(prm.NXNY, sizeof(double));  // x component of velocity, initialized to 0 by calloc
-  double* v = (double*)calloc(prm.NXNY, sizeof(double));      // y component of velocity, initialized to 0 by calloc
-  double* vstar = (double*)calloc(prm.NXNY, sizeof(double));  // y component of velocity, initialized to 0 by calloc
-  double* w = (double*)calloc(prm.NXNY, sizeof(double));      // vorticity (only 1 component, because it is 2D), initialized to 0 by calloc
-  double* p = (double*)calloc(prm.NXNY, sizeof(double));      // pressure, initialized to 0 by calloc
-  // DO NOT ACCESS THE GHOST POINTS OF THESE ARRAYS
-  double* adv_u = (double*)malloc(prm.NXNY * sizeof(double));  // advection term of u
-  double* adv_v = (double*)malloc(prm.NXNY * sizeof(double));  // advection term of v
-
-  if (animation) {
-    file_output_w.open(filename_solution_w);
-    file_output_u.open(filename_solution_u);
-    write_sol_w(file_output_w, w, 0, prm);
-    write_sol(file_output_u, u, v, 0, prm);
+  double* u = new double[prm.NXNY];      // x component of velocity
+  double* ustar = new double[prm.NXNY];  // x component of velocity
+  double* v = new double[prm.NXNY];      // y component of velocity
+  double* vstar = new double[prm.NXNY];  // y component of velocity
+  double* w = new double[prm.NXNY];      // vorticity (only 1 component, because it is 2D)
+  double* p = new double[prm.NXNY];      // pressure
+  double* adv_u = new double[prm.NXNY];  // advection term of u
+  double* adv_v = new double[prm.NXNY];  // advection term of v
+  // initialize to 0
+  for (int i = 0; i < prm.NXNY; i++) {
+    u[i] = 0;
+    ustar[i] = 0;
+    v[i] = 0;
+    vstar[i] = 0;
+    w[i] = 0;
+    p[i] = 0;
+    adv_u[i] = 0;
+    adv_v[i] = 0;
   }
+  // double* u = (double*)calloc(prm.NXNY, sizeof(double));      // x component of velocity, initialized to 0 by calloc
+  // double* ustar = (double*)calloc(prm.NXNY, sizeof(double));  // x component of velocity, initialized to 0 by calloc
+  // double* v = (double*)calloc(prm.NXNY, sizeof(double));      // y component of velocity, initialized to 0 by calloc
+  // double* vstar = (double*)calloc(prm.NXNY, sizeof(double));  // y component of velocity, initialized to 0 by calloc
+  // double* w = (double*)calloc(prm.NXNY, sizeof(double));      // vorticity (only 1 component, because it is 2D), initialized to 0 by calloc
+  // double* p = (double*)calloc(prm.NXNY, sizeof(double));      // pressure, initialized to 0 by calloc
+  // // DO NOT ACCESS THE GHOST POINTS OF THESE ARRAYS
+  // double* adv_u = (double*)malloc(prm.NXNY * sizeof(double));  // advection term of u
+  // double* adv_v = (double*)malloc(prm.NXNY * sizeof(double));  // advection term of v
+
+  // if (animation) {
+  // file_output_w.open(filename_solution_w);
+  // file_output_u.open(filename_solution_u);
+  // write_sol_w(file_output_w, w, 0, prm);
+  // write_sol(file_output_u, u, v, 0, prm);
+  // }
+  saveSetupToHDF5(prm, T, vorticity, animation);
+  saveDataToHDF5(plot_count, u, v, w, p, prm.NX, prm.NY, t);
+  plot_count++;
   END_TIMER();
   ADD_TIME_TO(total_files);
   // -------------------------------------------
@@ -280,9 +302,10 @@ int main(void) {
         }
       }
       set_vorticity(ustar, vstar, w, prm);
-      write_sol_w(file_output_w, w, t, prm);
-      write_sol(file_output_u, ustar, vstar, t, prm);
-      anim_count++;
+      saveDataToHDF5(plot_count, ustar, vstar, w, p, prm.NX, prm.NY, t);
+      // write_sol_w(file_output_w, w, t, prm);
+      // write_sol(file_output_u, ustar, vstar, t, prm);
+      plot_count++;
     }
 
     if (t > fraction_completed * count - EPS) {
@@ -300,10 +323,10 @@ int main(void) {
   // ---------- auxiliar file to pass to the animation script ------------
   START_TIMER();
   if (animation) {
-    if (prm.obstacle_ON)
-      write_tmp_file(prm.LX, prm.LY, vorticity, object_type, obstacle->data);
-    else
-      write_tmp_file(prm.LX, prm.LY, vorticity);
+    // if (prm.obstacle_ON)
+    write_tmp_file(object_type, obstacle->data);
+    // else
+    //   write_tmp_file(prm.LX, prm.LY, vorticity);
   }
   END_TIMER();
   ADD_TIME_TO(total_files);
@@ -319,18 +342,15 @@ int main(void) {
   print("Total time for rest:                    " + space, total_others);
 
   // free memory
-  free(u);
-  free(v);
-  free(w);
-  free(ustar);
-  free(vstar);
-  free(p);
-  free(adv_u);
-  free(adv_v);
-
-  // close files
-  file_output_u.close();
-  file_output_w.close();
+  delete[] u;
+  delete[] ustar;
+  delete[] v;
+  delete[] vstar;
+  delete[] w;
+  delete[] p;
+  delete[] adv_u;
+  delete[] adv_v;
+  delete obstacle;
 
   return 0;
 }

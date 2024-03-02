@@ -89,6 +89,17 @@ class Object {
     set_data();
   }
 
+  // @brief Destructor of the object
+  virtual ~Object() {
+    delete[] IsInside;
+    delete[] IsGhost;
+    delete[] IsInterface;
+    delete[] BoundaryPoints;
+    delete[] GhostPoints;
+    delete[] MirrorPoints;
+    delete[] InterpolatingPoints;
+  }
+
   // @brief Check if a point (x, y) is inside the object
   // @param i x index of the point
   // @param j y index of the point

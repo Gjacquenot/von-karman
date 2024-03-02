@@ -10,6 +10,8 @@ The Kármán vortex street is a repeating pattern of swirling vortices caused by
 
 The code is written in `C++` and the animation is done in `Python`. You will need the library `Eigen` to compile it, as it is used for the linear algebra operations (with sparse matrices). You can check its webpage from [here](http://eigen.tuxfamily.org/index.php?title=Main_Page).
 
+In order to properly compile the code, you will to ensure that the `eigen3` folder is correctly linked in the `Makefile` file. Either you have the `eigen3` folder in the path `/usr/include/`, being this folder in the path of the system, or you will need to specify the library path in the `Makefile` in the `INCLUDES` variable. Keep in mind that you may also need to change `python` to `python3` in the `run.sh` file if you are using `python3` instead of `python`.
+
 To compile the code, first download it:
 
 ```
@@ -17,13 +19,13 @@ git clone git@github.com:victorballester7/von-karman.git
 cd von-karman
 ```
 
-Then, you can compile and run the code (having previously check your input parameters in the file `data/input.txt`) with the following command:
+Then, you can compile and run the code (having previously check your input parameters in the file `config/input.txt`) with the following command:
 
 ```
 ./run.sh
 ```
 
-If activated in the file `data/input.txt` (check the readme of the input file in `docs/input_README.txt`), the code will also animate the solution.
+If activated in the file `config/input.txt` (check the readme of the input file in `docs/input_README.txt`), the code will also animate the solution.
 
 ## Other information
 

@@ -7,8 +7,8 @@ CXXFLAGS := -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wcast-align -Wconversi
 CFLAGS := -Wall -Wextra -pedantic -Ofast -std=c11
 
 # Libraries
-LIBS := -lfftw3 -lm -L/usr/lib
-# INCLUDES := -I/usr/include/python3.11 -I/usr/lib/python3.11/site-packages/numpy/core/include
+LIBS := -lm -L/usr/lib -lhdf5_cpp -lhdf5
+INCLUDES := -I/usr/include #-I/path/to/eigen3
 
 # Folders
 SRC := src
@@ -38,11 +38,11 @@ $(BIN)/$(TARGET): $(OBJECTS)
 
 # We compile the .cpp files
 $(BIN)/%.o: $(SRC)/%.cpp
-	@$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c $< -o $@ $(LIBS)
+	@$(CXX) $(CXXFLAGS) -I$(INCLUDE) -I$(INCLUDES) -c $< -o $@ $(LIBS)
 
 # We compile the .c files
 $(BIN)/%.o: $(SRC)/%.c
-	@$(CC) $(CFLAGS) -I$(INCLUDE) -c $< -o $@ $(LIBS)
+	@$(CC) $(CFLAGS) -I$(INCLUDE) -I$(INCLUDES) -c $< -o $@ $(LIBS)
 
 clean:
 	@rm -f $(BIN)/*.o $(BIN)/$(TARGET)

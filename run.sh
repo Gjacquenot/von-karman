@@ -21,12 +21,12 @@ if [ $? -ne 0 ]; then
 fi
 echo -e "${GREEN}Running done!${RESET}"
 
-# check if there exists a file called "data/tmp_animation.txt"
-if [ ! -f "data/tmp_animation.txt" ]; then
+# check if there exists a file called "config/tmp_animation.txt"
+if [ ! -f "config/tmp_animation.txt" ]; then
   echo -e "${BLUE}Animation skipped.${RESET}"
 else
-  type_anim=$(cat data/tmp_animation.txt)
-  rm data/tmp_animation.txt # remove the tmp file
+  type_anim=$(cat config/tmp_animation.txt)
+  rm config/tmp_animation.txt # remove the tmp file
   echo -e "${YELLOW}Animating...${RESET}"
   python src/animation.py $type_anim
   if [ $? -ne 0 ]; then

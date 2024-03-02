@@ -64,8 +64,8 @@ double interpolate(int i, int j, double* phi, Prm prm, Object& obstacle);
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
 void set_vorticity(double* u, double* v, double* w, Prm prm);
 
-// @brief Build the Laplace matrix for the pressure Poisson equation laplace(p) = div(u)
-// @param coeffs vector of triplets to store the coefficients of the Laplace matrix. Triplets consist of (i, j, value), where i and j are the indices of the matrix and value is the value of the coefficient
+// @brief Build the Poisson matrix for the pressure Poisson equation poisson(p) = div(u)
+// @param coeffs vector of triplets to store the coefficients of the Possion matrix. Triplets consist of (i, j, value), where i and j are the indices of the matrix and value is the value of the coefficient
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
 void buildPoissonMatrix(vector<Trip>& coeffs, Prm prm);
 

@@ -11,7 +11,7 @@ from matplotlib.text import Text
 from typing import cast
 import sys
 import time
-from read_data import read_data_file
+from read_data import *
 from matplotlib.patches import Circle, Rectangle
 
 
@@ -28,22 +28,46 @@ cols_removed_beginning = 0
 cols_removed_end = 20
 
 
-def animate(filename: str, save=False):
+def animate(folder_path: str, save: bool = False):
     # Create a figure
     fig, ax = plt.subplots()
 
     # Read data
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Replace with the actual file path
-    file_path = script_dir + '/../' + filename
-    headers, data_blocks = read_data_file(file_path)
+    num_frames = len([f for f in os.listdir(folder_path)
+                      if os.path.isfile(os.path.join(folder_path, f))])
 
-    num_frames = len(data_blocks)
+    # Read data
+    Re, NX, NY, LX, LY, L, U, nu, dx, dy, dt, T, w_on, animation_on = readSetupFromHDF5(
+        folder_path + '../setup.h5')
+    times = []
+    data_blocks_u = []
+    data_blocks_v = []
+    data_blocks_w = []
+    data_blocks_p = []
+    for i in range(num_frames):
+        file_path = folder_path + 'sol_' + str(i) + '.h5'
+        t, u, v, w, p = readSolutionFromHDF5(file_path)
+        times.append(t)
+        # remove ghost cells
+        data_blocks_u.append(u[1:-1, 1:-1])
+        data_blocks_v.append(v[1:-1, 1:-1])
+        data_blocks_w.append(w[1:-1, 1:-1])
+        data_blocks_p.append(p[1:-1, 1:-1])
+
+    times = np.array(times)
+    data_blocks_u = np.array(data_blocks_u)
+    data_blocks_v = np.array(data_blocks_v)
+    data_blocks_w = np.array(data_blocks_w)
+    data_blocks_p = np.array(data_blocks_p)
+
     FPS = int(num_frames / duration) + 1  # +1 to ensure positivity
     interval = 1000 / FPS  # interval between frames in milliseconds
 
+    # data_blocks = np.sqrt(data_blocks_u**2 + data_blocks_v**2)
+    data_blocks = data_blocks_w
+
     # Print some information
-    print("Length of data: ", len(data_blocks))
+    print("Length of data: ", num_frames)
     print("Number of frames: ", num_frames)
     print("Interval: ", interval)
     print("Expected duration: ", duration)
@@ -60,12 +84,12 @@ def animate(filename: str, save=False):
     nx = data_blocks.shape[1]
     ny = data_blocks.shape[2]
 
-    dx = Lx / nx_old
-    dy = Ly / ny_old
+    dx = LX / nx_old
+    dy = LY / ny_old
 
     X = np.linspace(dx / 2 * (1 + cols_removed_beginning),
-                    Lx - dx / 2 * (1 + cols_removed_end), nx)
-    Y = np.linspace(dy / 2, Ly - dy / 2, ny)
+                    LX - dx / 2 * (1 + cols_removed_end), nx)
+    Y = np.linspace(dy / 2, LY - dy / 2, ny)
     X, Y = np.meshgrid(X, Y, indexing='xy')
 
     # transpose the data and reverse
@@ -77,19 +101,19 @@ def animate(filename: str, save=False):
     Z = data_blocks[0]
     Z_MAX = np.max(data_blocks)
     Z_MIN = np.min(data_blocks)
-    if vorticity:
+    if w_on:
         # the division by 2 is to make the colors more visible
         Z_MAX = max(Z_MAX, -Z_MIN) / 2
         Z_MIN = -Z_MAX
     # concentrate more strong colors (red and blue) on lower values
-    color = cm['RdBu_r'] if vorticity else cm['inferno']
+    color = cm['RdBu_r'] if w_on else cm['inferno']
     plot_args = {
         'cmap': color,
         'extent': [
             dx * cols_removed_beginning,
-            Lx - dx * cols_removed_end,
+            LX - dx * cols_removed_end,
             0,
-            Ly],
+            LY],
         'vmin': Z_MIN,
         'vmax': Z_MAX,
         # 'interpolation': 'none'}
@@ -101,7 +125,7 @@ def animate(filename: str, save=False):
 
     # set title (omega or sqrt(u^2 + v^2)
     ax.set_title(
-        r'$\omega$' if vorticity else r'$\sqrt{u^2 + v^2}$',
+        r'$\omega$' if w_on else r'$\sqrt{u^2 + v^2}$',
         y=y_pos_title)
 
     # Axes
@@ -111,13 +135,13 @@ def animate(filename: str, save=False):
     # plot a circle
     if object != "":
         if object == 'circle':
-            if vorticity:
+            if w_on:
                 obstacle = Circle((x0, y0), radius, color='black', fill=True)
             else:
                 obstacle = Circle((x0, y0), radius, color='w', fill=False)
             ax.add_artist(obstacle)
         elif object == 'rectangle':
-            if vorticity:
+            if w_on:
                 obstacle = Rectangle(
                     (x0 - width / 2, y0 - height / 2), width, height, color='black', fill=True)
             else:
@@ -127,7 +151,7 @@ def animate(filename: str, save=False):
         elif object == 'mountain':
             # mountain is the 1D function f(x) = y0 - sqrt(lambda^2 (x - x0)^2
             # + h)
-            if vorticity:
+            if w_on:
                 obstacle = ax.plot(X[0],
                                    y0 - np.sqrt(lamb**2 * (X[0] - x0)**2 + h),
                                    color='black')
@@ -139,7 +163,7 @@ def animate(filename: str, save=False):
             # airfoil is the 1D function f(x) = y0 + a * sqrt(x - x0) + b * (x
             # - x0) + c * (x - x0)^2 + d * (x - x0)^3 + e * (x - x0)^4
             XX = np.linspace(x0, x0 + 1, 5 * nx)
-            if vorticity:
+            if w_on:
                 obstacle = ax.plot(XX, y0 +
                                    a * np.sqrt(XX - x0) +
                                    b * (XX - x0) +
@@ -189,7 +213,7 @@ def animate(filename: str, save=False):
         Z = data_blocks[real_frame]
 
         # Update the time text
-        time_text.set_text('t = %.3f' % headers[real_frame])
+        time_text.set_text('t = %.3f' % times[real_frame])
 
         # Update the plot
         plot[0] = ax.imshow(Z, **plot_args)
@@ -223,33 +247,25 @@ arguments = ' '.join(sys.argv[1:])
 print("python src/animation.py " + arguments)
 
 try:
-    Lx = float(sys.argv[1])
-    Ly = float(sys.argv[2])
-    vorticity = bool(int(sys.argv[3]))
-except IndexError:
-    Lx = np.nan
-    Ly = np.nan
-    vorticity = False
-try:
-    object = sys.argv[4]
+    object = sys.argv[1]
 except IndexError:
     object = ""
 
 if object == 'circle':
     try:
-        x0 = float(sys.argv[5])
-        y0 = float(sys.argv[6])
-        radius = float(sys.argv[7])
+        x0 = float(sys.argv[2])
+        y0 = float(sys.argv[3])
+        radius = float(sys.argv[4])
     except IndexError:
         x0 = np.nan
         y0 = np.nan
         radius = np.nan
 elif object == 'rectangle':
     try:
-        x0 = float(sys.argv[5])
-        y0 = float(sys.argv[6])
-        width = float(sys.argv[7])
-        height = float(sys.argv[8])
+        x0 = float(sys.argv[2])
+        y0 = float(sys.argv[3])
+        width = float(sys.argv[4])
+        height = float(sys.argv[5])
     except IndexError:
         x0 = np.nan
         y0 = np.nan
@@ -257,10 +273,10 @@ elif object == 'rectangle':
         height = np.nan
 elif object == "mountain":
     try:
-        x0 = float(sys.argv[5])
-        y0 = float(sys.argv[6])
-        h = float(sys.argv[7])
-        lamb = float(sys.argv[8])
+        x0 = float(sys.argv[2])
+        y0 = float(sys.argv[3])
+        h = float(sys.argv[4])
+        lamb = float(sys.argv[5])
     except IndexError:
         x0 = np.nan
         y0 = np.nan
@@ -268,14 +284,14 @@ elif object == "mountain":
         lamb = np.nan
 elif object == "airfoil":
     try:
-        a = float(sys.argv[5])
-        b = float(sys.argv[6])
-        c = float(sys.argv[7])
-        d = float(sys.argv[8])
-        e = float(sys.argv[9])
-        lamb = float(sys.argv[10])
-        x0 = float(sys.argv[11])
-        y0 = float(sys.argv[12])
+        a = float(sys.argv[2])
+        b = float(sys.argv[3])
+        c = float(sys.argv[4])
+        d = float(sys.argv[5])
+        e = float(sys.argv[6])
+        lamb = float(sys.argv[7])
+        x0 = float(sys.argv[8])
+        y0 = float(sys.argv[9])
     except IndexError:
         a = np.nan
         b = np.nan
@@ -286,6 +302,6 @@ elif object == "airfoil":
         x0 = np.nan
         y0 = np.nan
 
-sol_u = 'data/w_solution.txt' if vorticity else 'data/u_solution.txt'
+folder_name = 'output/results/'
 
-animate(sol_u)
+animate(folder_name)
