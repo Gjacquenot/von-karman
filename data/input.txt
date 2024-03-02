@@ -3,12 +3,12 @@ Ly 1
 nx 500
 ny 100
 dt 0.001
-Tfinal 8
-Re 5000
+Tfinal 20
+Re 600
 Lscale 0.25
 nu 1.506e-5
 vorticity 0
 obstacle 1
-object airfoil
+object rectangle
 animation 1
 animation_dt 0.1

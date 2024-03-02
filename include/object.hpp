@@ -322,10 +322,10 @@ class Airfoil : public Object {
   // equation for the lower part of the airfoil:
   // f(x) = 2 * y0 - f(x)
  public:
-  double a, b, c, d, e, x0, y0;
+  double a, b, c, d, e, lambda, x0, y0;
   double dx;
   const double length = 1.0;
-  Airfoil(double a_, double b_, double c_, double d_, double e_, double x0_, double y0_, Prm prm) : a(a_), b(b_), c(c_), d(d_), e(e_), x0(x0_), y0(y0_) {
+  Airfoil(double a_, double b_, double c_, double d_, double e_, double lambda_, double x0_, double y0_, Prm prm) : a(a_), b(b_), c(c_), d(d_), e(e_), lambda(lambda_), x0(x0_), y0(y0_) {
     init(prm);
     this->dx = prm.dx;
   }
@@ -334,28 +334,31 @@ class Airfoil : public Object {
     if (x(i) < x0 || x(i) > x0 + length) {
       return false;
     }
-    double Y = f(x(i));
-    if (y(j) > Y || y(j) < 2 * y0 - Y) {
+    if (y(j) > f_top(x(i)) || y(j) < f_bottom(x(i))) {
       return false;
     }
     return true;
   }
 
-  double f(double x) {
+  double f_top(double x) {
     return y0 + a * sqrt(x - x0) + b * (x - x0) + c * (x - x0) * (x - x0) + d * (x - x0) * (x - x0) * (x - x0) + e * (x - x0) * (x - x0) * (x - x0) * (x - x0);
+  }
+
+  double f_bottom(double x) {
+    return y0 - lambda * (a * sqrt(x - x0) + b * (x - x0) + c * (x - x0) * (x - x0) + d * (x - x0) * (x - x0) * (x - x0) + e * (x - x0) * (x - x0) * (x - x0) * (x - x0));
   }
 
   Point closest_boundary_point(double x, double y) override {
     // we do linear interpolation to find the closest point on the boundary
     // horizontal distance to the boundary
     double X11 = x, X12, Y1 = y, yaux1, yaux2;
-    yaux1 = f(X11);
+    yaux1 = (y > y0) ? f_top(x) : f_bottom(x);
     double dx_small = dx / 10;  // only valid for points near boundary
     // get the closest X1 to the airfoil in the level y = Y1
     int sign = (x > x0 + length / 2) ? 1 : -1;
     for (int i = 0; i <= 10; i++) {
       X12 = X11 + sign * dx_small;
-      yaux2 = f(X12);
+      yaux2 = (y > y0) ? f_top(X12) : f_bottom(X12);
       if (yaux1 < Y1 && yaux2 > Y1) {
         break;
       }
@@ -364,7 +367,7 @@ class Airfoil : public Object {
     double m = (yaux2 - yaux1) / (X12 - X11);
     double X1 = (Y1 - yaux1) / m + X11;
     double X2 = x;
-    double Y2 = f(x);
+    double Y2 = (y > y0) ? f_top(x) : f_bottom(x);
     // line equation from (X1, Y1) to (X2, Y2) is g(X) = Y1 + m * (X - X1)
     // perpendicular line passing through (x, y) is h(X) = y - (X - x) / m
     // we solve g(X) = h(X) to find the closest point
@@ -375,7 +378,7 @@ class Airfoil : public Object {
   }
 
   void set_data() override {
-    data = to_string(a) + " " + to_string(b) + " " + to_string(c) + " " + to_string(d) + " " + to_string(e) + " " + to_string(x0) + " " + to_string(y0);
+    data = to_string(a) + " " + to_string(b) + " " + to_string(c) + " " + to_string(d) + " " + to_string(e) + " " + to_string(lambda) + " " + to_string(x0) + " " + to_string(y0);
   }
 };
 

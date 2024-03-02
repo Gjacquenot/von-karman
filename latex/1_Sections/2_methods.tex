@@ -1,0 +1,86 @@
+%Here a lot is missing but for first start I have copied the graphics which content should be included here REFERENCE_numerical. Page 271 main reference \cite{numeric_method_book}
+\subsection{Posing the problem}
+To simplify our approach we look at a two dimensional incompressible fluid. In this Section we want to pose the problem by introducing the underlying mathematical equations and discuss the boundary conditions.\\
+
+\subsubsection{Underlying equations}
+In our approach we simplify the problem to a two-dimensional viscous fluid flow in a rectangular domain box flowing from one side of the box to the other, encountering an obstacle in its path. The motion of the fluid is described by the \textit{incompressible Navier-Stokes equation}
+
+\begin{align}
+    \rho \left( \frac{\partial \textbf{u}}{\partial t}  + \textbf{u} \cdot \nabla \textbf{u} \right)- \mu \Delta \textbf{u}+ \nabla p =0 \label{eq: incompressNS} \\
+    \nabla u = 0 \notag
+\end{align}
+
+where $\rho$ is the mass density (assumed constant), $\textbf{u} = (u,v)$ is the fluid velocity with horizontal component $u$ and vertical component $v$, $\mu$ is the dynamic viscosity of the fluid and $p$ is the pressure. he first equation encapsulates the momentum balance within the fluid, incorporating the effects of convection (velocity interaction and movement), diffusion (velocity spreading due to viscosity), and the pressure gradient's influence on the fluid motion, whereas the second equation, often termed the continuity equation, asserts the incompressibility of the fluid by ensuring the volume conservation within the flow. The equations can be adimensionalized to obtain the dimensionless \textit{Reynolds number} by looking at
+
+\begin{align}
+    \Tilde{\textbf{u}} = \frac{\textbf{u}}{U}, \quad \Tilde{p} = \frac{p}{\rho U^2}, \quad \Tilde{\textbf{x}} = \frac{\textbf{x}}{L}, \quad \Tilde{t} = \frac{U}{L}t
+\end{align}
+
+with the characteristic velocity $U$ and length $L$. We get (dropping the tilde for readability)
+
+\begin{align}
+    \frac{\partial \textbf{u}}{\partial t} + \textbf{u} \cdot \nabla \textbf{u} - \frac{1}{\text{Re}} \Delta \textbf{u} + \nabla p = 0 \\
+    \nabla \textbf{u} = 0 \notag
+\end{align}
+
+where the Reynolds number Re $= \frac{\rho U L}{\mu}$ which measure the ratio of the viscosity to the inertia of the flow. \\
+
+\subsubsection{Boundary conditions}
+%The body is first time mentionend here but will be explained later
+The domain $\Omega$ is the rectangular box without the obstacle. We call the horizontal direction $x$ and the vertical direction $y$-direction. In our study on the left side a laminar flow is coming into the domain. At the beginning the fluid inside the box is at rest. At the horizontal walls a slip condition is imposed and a free flow on the right side is assumed. Therefore we obtain as boundary conditions for the walls
+
+\begin{itemize}
+    \item For the time $t=0$, the fluid is at rest, and both velocity and pressure are zero.
+    \item On the left side, the flow is incoming with a velocity equal to $U \mathbf{e}_x$, and the pressure satisfies the conditions $\frac{\partial p}{\partial x} = 0$.
+    \item On the right side of the domain, the flow is free so that $\frac{\partial u}{\partial x} = \frac{\partial v}{\partial x} = 0$ and $p = 0$.
+    \item On the horizontal sides, the walls are impenetrable, so that $v = 0$. A slip condition is imposed so that $\frac{\partial u}{\partial y} = 0$ and $\frac{\partial p}{\partial y} = 0$.
+\end{itemize}
+
+Dealing with the object is non-trivial since the shape of the object is non-trivial. We present our procedure to a greater extent in \textcolor{red}{Section} \ref{}, and explain the numerical procedure. Summarizing our approach, we deal with the flow close to the object with the \textit{immersed boundary method} initially developed by Charles Peskin in the early 1970s (s. \cite{Peskin2002ImmersedBoundary}). The advantage of this method is that it allows for the integration of complex object geometries within fluid flow simulations without the need for conformal meshing around the object's shape. The method treats the object as if it were "immersed" in the fluid, with the fluid and the object influencing each other through a series of force interactions. These interactions are calculated at discrete points along the object's boundary, allowing us to simulate the effect of the object on the fluid. \\
+The process begins by determining the velocities that the fluid would ideally have at points close to the object's surface, referred to as "desired velocities". These velocities are conceptualized based on the physical understanding of how the fluid should move around the object, considering its shape, orientation, and any other relevant physical conditions. For instance, in the vicinity of a smooth, curved surface, the fluid velocity might be expected to align closely with the contour of the object due to the no-slip condition at the boundary.\\
+As a next step, the desired velocities are compared with the actual velocities in the integration step and a corrective force is applied on the fluid to account for the presence of the body in the fluid.
+
+
+\subsection{Difference Scheme}
+% Putting the prior sections together what is the "flow chart of our solver" and how do we legitimate our solver) In the appendix or here a little flow chart of the algorithm. I would like to explain our code in the appendix, kind of a read me for the code
+In this section we discuss our numerical solver to integrate Equations \ref{eq: incompressNS} in respect to the boundary conditions presented in above section. To simplify the equations, we use \textit{Chorin's method} to split the problem for the velocity and the pressure. We therefore first solve the convection and diffusion problem for the velocities before incorporating the pressure term. Later will be included whilst solving the Poisson equation to garantuee the incompressibility of the fluid during the integration. Finally we update the velcoities with the pressure. 
+
+\subsubsection{Chorin's method}
+% Overview what is Chorins method
+\begin{itemize}
+    \item step 1
+    \item step 2
+    \item step 3
+    \item 4
+\end{itemize}
+\subsubsection{Semi-Langragian method}
+% What is a Semi-Langrangian method
+\subsubsection{Immeresed body method}
+% How did we specifically deal with the immeresed body in the case of a circle, ellipse if we use that later
+\subsubsection{Solving for the Poisson equation}
+% How did we solve the poisson equation (dct and why dct)
+\subsubsection{And now our specific scheme}
+
+
+\subsection{Analytical benchmarking: 2D Pouiseville flow}
+\textcolor{red}{MISSING CITATIONS}
+%Here we show 2d pouisseville flow to get a analytical solution, to test our solver to
+The 2D Poiseuille flow, characterized by the laminar movement of an incompressible, Newtonian fluid between two infinite parallel plates propelled by a constant pressure gradient, stands as an exemplary case for analytical benchmarking. With assumptions of steady-state conditions, adherence to no-slip boundary conditions at the walls, and the omission of gravity's influence, the Navier-Stokes equations are significantly simplified. Consequently, this scenario provides an ideal foundation for analytical benchmarking of our solver.
+
+Following standard literature, the momentum equation in the direction parallel to the plates (x-direction) reduces to:
+\begin{align}
+    \frac{\partial P}{\partial x} = \mu \frac{\partial^2 u}{\partial y^2}
+\end{align}
+where $P$ is the pressure, $\mu$ is the dynamic viscosity of the fluid, $u$ is the velocity in the x-direction, and $y$ is the perpendicular distance from one of the plates.
+
+Integrating this equation twice with respect to $y$ and applying the no-slip boundary conditions ($u=0$ at $y=0$ and $y=h$, where $h$ is the distance between the plates), we obtain the velocity profile:
+\begin{align}
+    u(y) = \frac{1}{2\mu} \frac{\partial P}{\partial x} (y^2 - hy)
+\end{align}
+
+This equation describes a parabolic velocity profile, with the maximum velocity occurring at the midpoint between the plates ($y = \frac{h}{2}$):
+\begin{align}
+    u_{max} = -\frac{h^2}{8\mu} \frac{\partial P}{\partial x}
+\end{align}
+
+To verify our solver, we simulate the 2D Poiseuille flow under the same conditions and compare the numerical velocity profile against the analytical solution.

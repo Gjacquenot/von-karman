@@ -13,6 +13,7 @@
 using namespace Eigen;
 
 #define EPS 1e-8
+// #define interpolate_boundary 1
 
 #define START_TIMER() begin = chrono::steady_clock::now()
 #define END_TIMER() end = chrono::steady_clock::now()
@@ -118,7 +119,7 @@ int main(void) {
   } else if (object_type == "mountain") {
     obstacle = new Mountain(0.7, 0.9, 0.2, 3.1, prm);
   } else if (object_type == "airfoil") {
-    obstacle = new Airfoil(0.17814, -0.0756, -0.21096, 0.17058, -0.0609, prm.LX / 8, prm.LY / 2, prm);
+    obstacle = new Airfoil(0.17814, -0.0756, -0.21096, 0.17058, -0.0609, 0.2, prm.LX / 8, prm.LY / 2, prm);
   } else {
     cout << "Object type not recognized" << endl;
     return 1;
@@ -264,14 +265,20 @@ int main(void) {
       // linear interpolation on the outer discrete boundary of the object to smooth the boundary jump values.
       memcpy(ustar, u, prm.NXNY * sizeof(double));
       memcpy(vstar, v, prm.NXNY * sizeof(double));
-      // for (int i = 1; i < prm.NX - 1; i++) {
-      //   for (int j = 1; j < prm.NY - 1; j++) {
-      //     if (prm.obstacle_ON && obstacle->IsInterface[i * prm.NY + j]) {
-      //       Ustar(i, j) = interpolate(i, j, ustar, prm, *obstacle);
-      //       Vstar(i, j) = interpolate(i, j, vstar, prm, *obstacle);
-      //     }
-      //   }
-      // }
+      for (int i = 1; i < prm.NX - 1; i++) {
+        for (int j = 1; j < prm.NY - 1; j++) {
+          if (prm.obstacle_ON && obstacle->IsInside[i * prm.NY + j]) {
+            Ustar(i, j) = 0;
+            Vstar(i, j) = 0;
+          }
+#ifdef interpolate_boundary
+          if (prm.obstacle_ON && obstacle->IsInterface[i * prm.NY + j]) {
+            Ustar(i, j) = interpolate(i, j, ustar, prm, *obstacle);
+            Vstar(i, j) = interpolate(i, j, vstar, prm, *obstacle);
+          }
+#endif
+        }
+      }
       set_vorticity(ustar, vstar, w, prm);
       write_sol_w(file_output_w, w, t, prm);
       write_sol(file_output_u, ustar, vstar, t, prm);

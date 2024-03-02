@@ -94,6 +94,7 @@ def animate(filename: str, save=False):
         'vmax': Z_MAX,
         # 'interpolation': 'none'}
         'interpolation': 'spline16'}
+    # 'interpolation': 'bilinear'}
     text_args = {'x': 0.5, 'y': y_pos_text, 's': '', 'transform': ax.transAxes,
                  'fontsize': FONTSIZE_TIME, 'horizontalalignment': 'center'}
     time_text = ax.text(**text_args)
@@ -137,20 +138,36 @@ def animate(filename: str, save=False):
         elif object == 'airfoil':
             # airfoil is the 1D function f(x) = y0 + a * sqrt(x - x0) + b * (x
             # - x0) + c * (x - x0)^2 + d * (x - x0)^3 + e * (x - x0)^4
-            XX = np.linspace(x0, x0 + 1, nx)
+            XX = np.linspace(x0, x0 + 1, 5 * nx)
             if vorticity:
-                obstacle = ax.plot(XX,
-                                   y0 + a * np.sqrt(XX - x0) + b * (XX - x0) + c * (
-                                       XX - x0)**2 + d * (XX - x0)**3 + e * (XX - x0)**4,
-                                   color='black') + ax.plot(XX, y0 - a * np.sqrt(XX - x0) - b * (XX - x0) - c * (
-                                       XX - x0)**2 - d * (XX - x0)**3 - e * (XX - x0)**4, color='black')
+                obstacle = ax.plot(XX, y0 +
+                                   a * np.sqrt(XX - x0) +
+                                   b * (XX - x0) +
+                                   c * (XX - x0)**2 +
+                                   d * (XX - x0)**3 +
+                                   e * (XX - x0)**4,
+                                   color='black') + ax.plot(XX, y0 -
+                                                            lamb * (a * np.sqrt(XX - x0) +
+                                                                    b * (XX - x0) +
+                                                                    c * (XX - x0)**2 +
+                                                                    d * (XX - x0)**3 +
+                                                                    e * (XX - x0)**4),
+                                                            color='black')
 
             else:
-                obstacle = ax.plot(XX,
-                                   y0 + a * np.sqrt(XX - x0) + b * (XX - x0) + c * (
-                                       XX - x0)**2 + d * (XX - x0)**3 + e * (XX - x0)**4,
-                                   color='w') + ax.plot(XX, y0 - a * np.sqrt(XX - x0) - b * (XX - x0) - c * (
-                                       XX - x0)**2 - d * (XX - x0)**3 - e * (XX - x0)**4, color='w')
+                obstacle = ax.plot(XX, y0 +
+                                   a * np.sqrt(XX - x0) +
+                                   b * (XX - x0) +
+                                   c * (XX - x0)**2 +
+                                   d * (XX - x0)**3 +
+                                   e * (XX - x0)**4,
+                                   color='w') + ax.plot(XX, y0 -
+                                                        lamb * (a * np.sqrt(XX - x0) +
+                                                                b * (XX - x0) +
+                                                                c * (XX - x0)**2 +
+                                                                d * (XX - x0)**3 +
+                                                                e * (XX - x0)**4),
+                                                        color='w')
     # Create plot
     plot = [ax.imshow(Z, **plot_args)]
 
@@ -200,8 +217,10 @@ UNIT_TIME = 1000  # in seconds
 LABEL_TIME = "ms"
 start_time = time.time()
 
-# print the arguments
-# print("Arguments: ", sys.argv)
+# print python executable instruction
+# Join the arguments using a space as a separator
+arguments = ' '.join(sys.argv[1:])
+print("python src/animation.py " + arguments)
 
 try:
     Lx = float(sys.argv[1])
@@ -254,14 +273,16 @@ elif object == "airfoil":
         c = float(sys.argv[7])
         d = float(sys.argv[8])
         e = float(sys.argv[9])
-        x0 = float(sys.argv[10])
-        y0 = float(sys.argv[11])
+        lamb = float(sys.argv[10])
+        x0 = float(sys.argv[11])
+        y0 = float(sys.argv[12])
     except IndexError:
         a = np.nan
         b = np.nan
         c = np.nan
         d = np.nan
         e = np.nan
+        lamb = np.nan
         x0 = np.nan
         y0 = np.nan
 
