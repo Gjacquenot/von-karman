@@ -8,4 +8,4 @@ colorbar_args = {'shrink': 0.5, 'aspect': 10, 'location': 'left'}
 duration = 10  # duration of the animation in seconds
 cols_removed_beginning = 0
 cols_removed_end = 10
-color_object = 'limegreen'
+color_object = 'grey'

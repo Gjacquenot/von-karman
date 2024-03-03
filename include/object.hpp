@@ -86,7 +86,7 @@ class Object {
         }
       }
     }
-    set_data();
+    //set_data();
   }
 
   // @brief Destructor of the object

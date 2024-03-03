@@ -25,7 +25,7 @@ fi
 echo -e "${GREEN}Running done!${RESET}"
 
 echo -e "${YELLOW}Animating...${RESET}"
-python src/animation.py
+python3 src/animation.py
 if [ $? -ne 0 ]; then
   echo -e "${RED}Animating failed!${RESET}"
   exit 1
