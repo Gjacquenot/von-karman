@@ -14,17 +14,17 @@
 using namespace H5;
 using namespace std;
 
-template <typename... Args>
+// template <typename... Args>
 
 // @brief Write the arguments to a temporary file
 // @param args arguments to be written to the file
-void write_tmp_file(Args... args) {
-  ofstream file;
-  file.open("config/tmp_animation.txt");
-  // write all the arguments to the file one by one (separated by a space)
-  ((file << args << " "), ...);
-  file.close();
-}
+// void write_tmp_file(Args... args) {
+//   ofstream file;
+//   file.open("config/tmp_animation.txt");
+//   // write all the arguments to the file one by one (separated by a space)
+//   ((file << args << " "), ...);
+//   file.close();
+// }
 
 // @brief Print a string and a time in a human-readable format (in the form: "string xx.xx units")
 // @param str string to be printed

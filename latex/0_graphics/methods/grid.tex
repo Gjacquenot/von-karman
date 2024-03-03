@@ -1,0 +1,25 @@
+\documentclass{standalone}
+\usepackage{../../tikz-v}
+
+\def\gridPointsX{7}
+\def\gridPointsY{5}
+
+\begin{document}
+\begin{tikzpicture}
+  % draw boundary in red with diagonal lines pattern in red
+  \draw[red, ultra thick, pattern=north east lines,pattern color=red] (0.5, 0.5) rectangle (\gridPointsX-0.5, \gridPointsY-0.5);
+  \foreach \x in {0,...,\gridPointsX} {
+      \foreach \y in {0,...,\gridPointsY} {
+          % if x == 0 or x == 7 or y == 0 or y == 5, draw a blue circle
+          \ifthenelse{\x=0 \OR \x=\gridPointsX \OR \y=0 \OR \y=\gridPointsY}{
+            \draw[circle, fill=blue] (\x, \y) circle (0.1);
+          }{
+            % otherwise, draw a black circle
+            \draw[circle, fill=black] (\x, \y) circle (0.1);
+          }
+        }
+    }
+
+
+\end{tikzpicture}
+\end{document}

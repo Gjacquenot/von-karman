@@ -8,6 +8,6 @@ Re 500
 nu 1.506e-5
 vorticity 1
 obstacle 1
-object circle
+object airfoil
 plot_dt 1
 animation 1

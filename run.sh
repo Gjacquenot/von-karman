@@ -13,6 +13,8 @@ if [ $? -ne 0 ]; then
 fi
 echo -e "${GREEN}Compilation done!${RESET}"
 
+
+
 echo -e "${YELLOW}Running...${RESET}"
 # check if the folder output/results exists, if not create it
 if [ ! -d "output/results" ]; then
@@ -22,7 +24,6 @@ else
   rm -rf output/results/*
 fi
 rm -rf output/*.h5
-
 ./bin/main
 if [ $? -ne 0 ]; then
   echo -e "${RED}Running failed!${RESET}"
@@ -31,7 +32,12 @@ fi
 echo -e "${GREEN}Running done!${RESET}"
 
 echo -e "${YELLOW}Animating...${RESET}"
-python3 src/animation.py
+# use python3 if you have it installed, otherwise use python
+if [ -x "$(command -v python3)" ]; then
+  python3 src/animation.py
+else
+  python src/animation.py
+fi
 if [ $? -ne 0 ]; then
   echo -e "${RED}Animating failed!${RESET}"
   exit 1

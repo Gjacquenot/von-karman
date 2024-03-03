@@ -20,6 +20,8 @@
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 
+\usepackage{parskip} % exchanges indentation for spacing between paragraphs.
+
 %############################ Header 
 \usepackage{fancyhdr} 
 \usepackage{lastpage} % \lastpage
@@ -39,14 +41,15 @@
 %############################ References 
 % Modify the font size of the bibliography
 \patchcmd{\thebibliography}{\fontsize{1}{1}}{\fontsize{1}{1}}{}{}
-
+\usepackage{bibliography}
 
 
 %############################ CODE
 \usepackage{listings}
-\usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{xcolor}
+\usepackage{math}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -137,8 +140,11 @@ Paris, February 27\textsuperscript{th}, 2024
 % ######## References
 % ###################################################################
 
-\bibliographystyle{unsrt}
-\bibliography{refs}
+%\bibliographystyle{unsrt}
+%\bibliography{refs}
+\phantomsection
+\addcontentsline{toc}{section}{References}
+\printbibliography
 
 \newpage
 \section{Appendix}
