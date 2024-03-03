@@ -81,12 +81,12 @@ class Object {
         IsInterface[i * prm.NY + j] = false;
         if (!IsInside[i * prm.NY + j]) {
           if (is_inside(i - 1, j, prm) || is_inside(i + 1, j, prm) || is_inside(i, j - 1, prm) || is_inside(i, j + 1, prm)) {
-            IsInterface[i * prm.NY + j] = 7;
+            IsInterface[i * prm.NY + j] = true;
           }
         }
       }
     }
-    //set_data();
+    // set_data();
   }
 
   // @brief Destructor of the object
