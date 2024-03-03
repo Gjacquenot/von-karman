@@ -113,9 +113,6 @@ class Object {
   // @return the closest point on the boundary of the object to the given point
   virtual Point closest_boundary_point(double x, double y) = 0;
 
-  // @brief Set the data of the object (used to write the main characteristics of the object to a file)
-  virtual void set_data() = 0;
-
   // @brief Find the mirror point of a given point (x, y) with respect to the object
   // @param x x coordinate of the point
   // @param y y coordinate of the point
@@ -251,10 +248,6 @@ class Circle : public Object {
     double d = sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0));
     return {x0 + R * (x - x0) / d, y0 + R * (y - y0) / d};
   }
-
-  void set_data() override {
-    data = to_string(x0) + " " + to_string(y0) + " " + to_string(R);
-  }
 };
 
 class Rectangle : public Object {
@@ -281,15 +274,11 @@ class Rectangle : public Object {
       return {x, (y > y0) ? y0 + Ly / 2 : y0 - Ly / 2};
     }
   }
-
-  void set_data() override {
-    data = to_string(x0) + " " + to_string(y0) + " " + to_string(Lx) + " " + to_string(Ly);
-  }
 };
 
 class Mountain : public Object {
   // function defined by:
-  // f(x) = y0 - sqrt(lambda^2 (x - x0)^2 + h)
+  // f(x) = y0 - sqrt(lambda ^ 2 (x - x0) ^ 2 + h ^ 2)
 
  public:
   double x0, y0, h, lambda;
@@ -301,18 +290,22 @@ class Mountain : public Object {
     if (y(j) < 0) {
       return false;
     }
-    return y(j) < y0 - sqrt(lambda * lambda * (x(i) - x0) * (x(i) - x0) + h);
+    return y(j) < f(x(i));
+  }
+
+  double f(double x) {
+    return y0 - sqrt(lambda * lambda * (x - x0) * (x - x0) + h * h);
   }
 
   Point closest_boundary_point(double x, double y) override {
     // we do linear interpolation to find the closest point on the boundary
     // horizontal distance to the boundary
-    double X11 = sqrt((y - y0) * (y - y0) - h) / lambda + x0;
-    double X12 = -sqrt((y - y0) * (y - y0) - h) / lambda + x0;
+    double X11 = sqrt((y - y0) * (y - y0) - h * h) / lambda + x0;
+    double X12 = -sqrt((y - y0) * (y - y0) - h * h) / lambda + x0;
     double X1 = (abs(x - X11) < abs(x - X12)) ? X11 : X12;
     double Y1 = y0;
     double X2 = x0;
-    double Y2 = y0 - sqrt(lambda * lambda * (x - x0) * (x - x0) + h);
+    double Y2 = f(x);
     // line equation from (X1, Y1) to (X2, Y2) is g(X) = Y1 + m * (X - X1)
     // perpendicular line passing through (x, y) is h(X) = y - (X - x) / m
     // we solve g(X) = h(X) to find the closest point
@@ -321,17 +314,14 @@ class Mountain : public Object {
     double Y = Y1 + m * (X - X1);
     return {X, Y};
   }
-
-  void set_data() override {
-    data = to_string(x0) + " " + to_string(y0) + " " + to_string(h) + " " + to_string(lambda);
-  }
 };
 
 class Airfoil : public Object {
+  // f(x) = a * sqrt(x - x0) + b * (x - x0) + c * (x - x0)^2 + d * (x - x0)^3 + e * (x - x0)^4
   // equation for the upper part of the airfoil:
-  // f(x) = y0 + a * sqrt(x - x0) + b * (x - x0) + c * (x - x0)^2 + d * (x - x0)^3 + e * (x - x0)^4
+  // y(x) = y0 + f(x)
   // equation for the lower part of the airfoil:
-  // f(x) = 2 * y0 - f(x)
+  // f(x) = y0 - lambda * f(x)
  public:
   double a, b, c, d, e, lambda, x0, y0;
   double dx;
@@ -386,10 +376,6 @@ class Airfoil : public Object {
     double X = (m * m * X1 + x + m * y - m * Y1) / (m * m + 1);
     double Y = Y1 + m * (X - X1);
     return {X, Y};
-  }
-
-  void set_data() override {
-    data = to_string(a) + " " + to_string(b) + " " + to_string(c) + " " + to_string(d) + " " + to_string(e) + " " + to_string(lambda) + " " + to_string(x0) + " " + to_string(y0);
   }
 };
 

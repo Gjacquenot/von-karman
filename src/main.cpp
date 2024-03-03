@@ -30,7 +30,6 @@ int main(void) {
   const uint per = 10;                               // progress percentage interval to print (each count%)
   uint count = per;
   Prm prm;
-  double T;             // final time of the simulation
   bool animation;       // flag to enable or disable the animation
   bool vorticity;       // flag to enable or disable plotting the vorticity
   double plot_dt;       // frequency to write the animation file
@@ -52,9 +51,8 @@ int main(void) {
     file_input >> tmp >> prm.nx;
     file_input >> tmp >> prm.ny;
     file_input >> tmp >> prm.dt;
-    file_input >> tmp >> T;
+    file_input >> tmp >> prm.T;
     file_input >> tmp >> prm.Re;
-    file_input >> tmp >> prm.L;
     file_input >> tmp >> prm.nu;
     file_input >> tmp >> vorticity;
     file_input >> tmp >> prm.obstacle_ON;
@@ -70,13 +68,70 @@ int main(void) {
   prm.dy = prm.LY / prm.ny;
   prm.NXNY = (uint)(prm.NX * prm.NY);
   prm.nxny = (uint)(prm.nx * prm.ny);
+
+  // ------------- Obstacle setup ----------------
+  START_TIMER();
+  Object* obstacle;
+  file_input.open("config/" + object_type + ".txt");
+  if (object_type == "circle") {
+    double x0, y0, R;
+    if (file_input.is_open()) {
+      file_input >> tmp >> x0;
+      file_input >> tmp >> y0;
+      file_input >> tmp >> R;
+    }
+    obstacle = new Circle(x0, y0, R, prm);
+    prm.L = 2 * R;
+  } else if (object_type == "rectangle") {
+    double x0, y0, Lx, Ly;
+    if (file_input.is_open()) {
+      file_input >> tmp >> x0;
+      file_input >> tmp >> y0;
+      file_input >> tmp >> Lx;
+      file_input >> tmp >> Ly;
+    }
+    obstacle = new Rectangle(x0, y0, Lx, Ly, prm);
+    prm.L = Ly;
+  } else if (object_type == "mountain") {
+    double x0, y0, h, lambda;
+    if (file_input.is_open()) {
+      file_input >> tmp >> x0;
+      file_input >> tmp >> y0;
+      file_input >> tmp >> h;
+      file_input >> tmp >> lambda;
+    }
+    obstacle = new Mountain(x0, y0, h, lambda, prm);
+    prm.L = y0 - h;
+  } else if (object_type == "airfoil") {
+    double a, b, c, d, e, lambda, x0, y0;
+    if (file_input.is_open()) {
+      file_input >> tmp >> a;
+      file_input >> tmp >> b;
+      file_input >> tmp >> c;
+      file_input >> tmp >> d;
+      file_input >> tmp >> e;
+      file_input >> tmp >> lambda;
+      file_input >> tmp >> x0;
+      file_input >> tmp >> y0;
+    }
+    obstacle = new Airfoil(a, b, c, d, e, lambda, x0, y0, prm);
+    prm.L = 0.06001727 * (1 + lambda);  // with default values (numerical computation)
+  } else {
+    cout << "Object type not recognized" << endl;
+    return 1;
+  }
+  file_input.close();
+  END_TIMER();
+  ADD_TIME_TO(total_constr_obstacle);
+  // -------------------------------------------
+
   prm.U = prm.Re * prm.nu / prm.L;
 
   // ------------- Print plot setup -----------------
   cout << "dx:            " << space << prm.dx << endl;
   cout << "dy:            " << space << prm.dy << endl;
   cout << "dt:            " << space << prm.dt << endl;
-  cout << "T:             " << space << T << endl;
+  cout << "T:             " << space << prm.T << endl;
   cout << "Re:            " << space << prm.Re << endl;
   cout << "U:             " << space << prm.U << endl;
   cout << "Obstacle?      " << space << (prm.obstacle_ON ? "yes, " + object_type : "no") << endl;
@@ -86,7 +141,7 @@ int main(void) {
 
   double t = 0.0;
   uint numSteps = 0;
-  double fraction_completed = T / 100.;  // fraction of the integration time to print
+  double fraction_completed = prm.T / 100.;  // fraction of the integration time to print
 
   // allocate memory
   double* u = new double[prm.NXNY];      // x component of velocity
@@ -124,30 +179,11 @@ int main(void) {
   // write_sol_w(file_output_w, w, 0, prm);
   // write_sol(file_output_u, u, v, 0, prm);
   // }
-  saveSetupToHDF5(prm, T, vorticity, animation);
+  saveSetupToHDF5(prm, object_type, vorticity, animation);
   saveDataToHDF5(plot_count, u, v, w, p, prm.NX, prm.NY, t);
   plot_count++;
   END_TIMER();
   ADD_TIME_TO(total_files);
-  // -------------------------------------------
-
-  // ------------- Obstacle setup ----------------
-  START_TIMER();
-  Object* obstacle;
-  if (object_type == "circle") {
-    obstacle = new Circle(prm.LX / 8, prm.LY / 2, prm.L / 2, prm);  // L is the diameter of the circle
-  } else if (object_type == "rectangle") {
-    obstacle = new Rectangle(prm.LX / 8, prm.LY / 2, prm.L, prm.L, prm);  // L is the side of the square
-  } else if (object_type == "mountain") {
-    obstacle = new Mountain(0.7, 0.9, 0.2, 3.1, prm);
-  } else if (object_type == "airfoil") {
-    obstacle = new Airfoil(0.17814, -0.0756, -0.21096, 0.17058, -0.0609, 0.2, prm.LX / 8, prm.LY / 2, prm);
-  } else {
-    cout << "Object type not recognized" << endl;
-    return 1;
-  }
-  END_TIMER();
-  ADD_TIME_TO(total_constr_obstacle);
   // -------------------------------------------
 
   // ------------- Build Poission matrix -----------
@@ -174,7 +210,7 @@ int main(void) {
   numSteps++;
   double max_u_v = 0, lap, rhs_u, rhs_v;
 
-  while (t < T - EPS) {
+  while (t < prm.T - EPS) {
     if (prm.dt < EPS) {
       cout << "Time step too small. Exiting." << endl;
       return 1;
@@ -320,18 +356,6 @@ int main(void) {
     numSteps++;
   }
 
-  // ---------- auxiliar file to pass to the animation script ------------
-  START_TIMER();
-  if (animation) {
-    // if (prm.obstacle_ON)
-    write_tmp_file(object_type, obstacle->data);
-    // else
-    //   write_tmp_file(prm.LX, prm.LY, vorticity);
-  }
-  END_TIMER();
-  ADD_TIME_TO(total_files);
-  // --------------------------------------------------------------------
-
   print("Total time for files:                   " + space, total_files);
   print("Total time for construction of obstacle:" + space, total_constr_obstacle);
   print("Total time for build laplace:           " + space, total_build_poisson);
@@ -340,6 +364,8 @@ int main(void) {
   print("Total time for solve laplace:           " + space, total_solve_laplace);
   print("Total time for boundary:                " + space, total_boundary);
   print("Total time for rest:                    " + space, total_others);
+  printf("-----------------------------------------------------------\n");
+  print("Total time:                             " + space, total_files + total_advection + total_diffusion + total_others + total_build_poisson + total_solve_laplace + total_constr_obstacle + total_boundary);
 
   // free memory
   delete[] u;

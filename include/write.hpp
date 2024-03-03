@@ -95,7 +95,7 @@ void write_sol_w(ofstream& file, double* w, double t, Prm prm) {
   file << endl;
 }
 
-void saveSetupToHDF5(Prm prm, double T, bool vorticity_on, bool animation_on) {
+void saveSetupToHDF5(Prm prm, string object_type, bool vorticity_on, bool animation_on) {
   string filename = "output/setup.h5";
   const H5std_string DATASET_NAMES[] = {"Re", "NX", "NY", "LX", "LY",
                                         "L",
@@ -108,11 +108,19 @@ void saveSetupToHDF5(Prm prm, double T, bool vorticity_on, bool animation_on) {
     DataSpace scalar_dataspace(1, dims_scalar);
 
     // Create and write datasets for the variables
-    double datasets[] = {prm.Re, (double)prm.NX, (double)prm.NY, prm.LX, prm.LY, prm.L, prm.U, prm.nu, prm.dx, prm.dy, prm.dt, T, (double)vorticity_on, (double)animation_on};
+    double datasets[] = {prm.Re, (double)prm.NX, (double)prm.NY, prm.LX, prm.LY, prm.L, prm.U, prm.nu, prm.dx, prm.dy, prm.dt, prm.T, (double)vorticity_on, (double)animation_on};
     for (int i = 0; i < num_datasets; i++) {
       DataSet dataset = file.createDataSet(DATASET_NAMES[i], PredType::NATIVE_DOUBLE, scalar_dataspace);
       dataset.write(&datasets[i], PredType::NATIVE_DOUBLE);
     }
+
+    // Saving the object type
+    // Saving the object type
+    H5std_string object_type_name("obstacle");
+    H5::StrType strdatatype(H5::PredType::C_S1, object_type.size());
+    DataSet obstacle_dataset = file.createDataSet(object_type_name, strdatatype, scalar_dataspace);
+    obstacle_dataset.write(object_type.c_str(), strdatatype);
+
   } catch (FileIException& error) {
     error.printErrorStack();
     throw;  // Re-throw the exception to notify the caller of the failure.

@@ -26,6 +26,7 @@ typedef struct prm {
   double dt;         // time step
   double dx;         // grid spacing in the x direction
   double dy;         // grid spacing in the y direction
+  double T;          // final time
   double U;          // characteristic velocity
   double L;          // characteristic length
   double nu;         // kinematic viscosity

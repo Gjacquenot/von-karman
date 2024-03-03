@@ -1,6 +1,7 @@
 import numpy as np
 import h5py
-
+import os
+from defaults import *
 
 # def read_data_file(file_path):
 #     """Read data from file. The file is of the form:
@@ -53,6 +54,34 @@ import h5py
 #     return headers_array, data_blocks_array
 
 
+def get_num_frames(folder_path):
+    num_frames = len([f for f in os.listdir(folder_path)
+                      if os.path.isfile(os.path.join(folder_path, f))])
+    return num_frames
+
+
+def read_data_object(file_path):
+    """
+    Read data from file. The file is of the form:
+
+    A1 x0
+    A2 x1
+    ...
+    An xn
+    """
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    data = []
+    for line in lines:
+        header, value = line.split()
+        data.append(float(value))
+
+    data_array = np.array(data)
+
+    return data_array
+
+
 def readSetupFromHDF5(hdf5_file):
     with h5py.File(hdf5_file, 'r') as file:
         # Accessing the first element and converting to scalar
@@ -68,9 +97,10 @@ def readSetupFromHDF5(hdf5_file):
         dy = file['dy'][()].item()
         dt = file['dt'][()].item()
         T = file['T'][()].item()
+        obstacle = file['obstacle'][()].item().decode('utf-8')
         w_on = bool(file['w_on'][()].item())
         animation_on = bool(file['animation_on'][()].item())
-    return Re, NX, NY, LX, LY, L, U, nu, dx, dy, dt, T, w_on, animation_on
+    return Re, NX, NY, LX, LY, L, U, nu, dx, dy, dt, T, obstacle, w_on, animation_on
 
 
 def readSolutionFromHDF5(hdf5_file):
@@ -83,3 +113,57 @@ def readSolutionFromHDF5(hdf5_file):
         p = file['p'][:]
         t = file['t'][()].item()
     return t, u, v, w, p
+
+
+def set_data(folder_path):
+    num_frames = get_num_frames(folder_path)
+
+    times = []
+    data_blocks_u = []
+    data_blocks_v = []
+    data_blocks_w = []
+    data_blocks_p = []
+    for i in range(num_frames):
+        file_path = folder_path + 'sol_' + str(i) + '.h5'
+        t, u, v, w, p = readSolutionFromHDF5(file_path)
+        times.append(t)
+        # remove ghost cells
+        data_blocks_u.append(u[1:-1, 1:-1])
+        data_blocks_v.append(v[1:-1, 1:-1])
+        data_blocks_w.append(w[1:-1, 1:-1])
+        data_blocks_p.append(p[1:-1, 1:-1])
+
+    times = np.array(times)
+    data_blocks_u = np.array(data_blocks_u)
+    data_blocks_v = np.array(data_blocks_v)
+    data_blocks_w = np.array(data_blocks_w)
+    data_blocks_p = np.array(data_blocks_p)
+
+    arrays_to_process = [
+        data_blocks_u,
+        data_blocks_v,
+        data_blocks_w,
+        data_blocks_p]
+
+    # Iterate over each array and remove columns
+    for i, data_array in enumerate(arrays_to_process):
+        arrays_to_process[i] = np.delete(data_array,
+                                         np.s_[:cols_removed_beginning],
+                                         axis=1)
+        arrays_to_process[i] = np.delete(arrays_to_process[i],
+                                         np.s_[-cols_removed_end:],
+                                         axis=1)
+
+        tmp = arrays_to_process[i].copy()
+
+        arrays_to_process[i] = np.zeros(
+            (len(tmp), tmp.shape[2], tmp.shape[1]))
+
+        # transpose the data and reverse
+        for j, data in enumerate(tmp):
+            arrays_to_process[i][j] = data.T[::-1]
+
+    # Update the original arrays with the modified ones
+    data_blocks_u, data_blocks_v, data_blocks_w, data_blocks_p = arrays_to_process
+
+    return times, data_blocks_u, data_blocks_v, data_blocks_w, data_blocks_p
