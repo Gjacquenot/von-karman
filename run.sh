@@ -14,9 +14,15 @@ fi
 echo -e "${GREEN}Compilation done!${RESET}"
 
 echo -e "${YELLOW}Running...${RESET}"
-# removed the files inside output/results and output/
-rm -rf output/results/*
+# check if the folder output/results exists, if not create it
+if [ ! -d "output/results" ]; then
+  mkdir -p output/results
+else
+  # remove the files inside output/results
+  rm -rf output/results/*
+fi
 rm -rf output/*.h5
+
 ./bin/main
 if [ $? -ne 0 ]; then
   echo -e "${RED}Running failed!${RESET}"
