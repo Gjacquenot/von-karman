@@ -2,18 +2,9 @@ import matplotlib.pyplot as plt
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
-from matplotlib import colormaps as cm
-from matplotlib.ticker import LinearLocator
-import os
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.axes import Axes
-from matplotlib.text import Text
-from typing import cast
 import sys
 import time
 from read_data import *
-from matplotlib.patches import Circle, Rectangle
-from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 from defaults import *
 from plot_functions import *
 
@@ -68,7 +59,6 @@ def animate(folder_path: str, folder_object, obstacle, save: bool = False):
     ax.set_xlabel(X_LABEL)
     ax.set_ylabel(Y_LABEL)
 
-    # plot a circle
     if obstacle != "":
         get_obstacle(obstacle, nx, ax, folder_object)
 
@@ -130,20 +120,5 @@ Re, NX, NY, LX, LY, L, U, nu, dx, dy, dt, T, obstacle, w_on, animation_on = read
 if animation_on == False:
     print("Animation is off. Exiting...")
     sys.exit()
-
-# data = read_data_object(folder_object + obstacle + '.txt')
-# if obstacle == 'circle':
-#     x0, y0, radius = data
-#     print(x0, y0, radius)
-# elif obstacle == 'rectangle':
-#     x0, y0, width, height = data
-#     print(x0, y0, width, height)
-# elif obstacle == "mountain":
-#     x0, y0, lamb, h = data
-#     print(x0, y0, lamb, h)
-# elif obstacle == "airfoil":
-#     a, b, c, d, e, lamb, x0, y0 = data
-#     print(a, b, c, d, e, lamb, x0, y0)
-
 
 animate(folder_results, folder_object, obstacle)

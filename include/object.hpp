@@ -227,21 +227,31 @@ class Object {
 class Circle : public Object {
  public:
   double x0, y0, R;
-  double* r;
-  double* theta;
   Circle(double x0_, double y0_, double R_, Prm prm) : x0(x0_), y0(y0_), R(R_) {
     init(prm);
-    r = new double[prm.NX * prm.NY];
-    theta = new double[prm.NX * prm.NY];
-    for (int i = 0; i < prm.NX; i++) {
-      for (int j = 0; j < prm.NY; j++) {
-        r[i * prm.NY + j] = sqrt((x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0));
-        theta[i * prm.NY + j] = atan2(y(j) - y0, x(i) - x0);
-      }
-    }
   }
   bool is_inside(int i, int j, Prm prm) override {
     return (x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0) < R * R;
+  }
+
+  Point closest_boundary_point(double x, double y) override {
+    double d = sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0));
+    return {x0 + R * (x - x0) / d, y0 + R * (y - y0) / d};
+  }
+};
+
+class Circle_Fin : public Object {
+ public:
+  double x0, y0, R, Lx, Ly;
+  Circle_Fin(double x0_, double y0_, double R_, double Lx_, double Ly_, Prm prm) : x0(x0_), y0(y0_), R(R_), Lx(Lx_), Ly(Ly_) {
+    init(prm);
+  }
+  bool is_inside(int i, int j, Prm prm) override {
+    bool inside_circle = (x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0) < R * R;
+    double rect_x0 = x0 + R + Lx / 2;
+    double rect_y0 = y0;
+    bool inside_rect = (x(i) > rect_x0 - Lx / 2) && (x(i) < rect_x0 + Lx / 2) && (y(j) > rect_y0 - Ly / 2) && (y(j) < rect_y0 + Ly / 2);
+    return inside_circle || inside_rect;
   }
 
   Point closest_boundary_point(double x, double y) override {
@@ -327,8 +337,8 @@ class Airfoil : public Object {
   double dx;
   const double length = 1.0;
   Airfoil(double a_, double b_, double c_, double d_, double e_, double lambda_, double x0_, double y0_, Prm prm) : a(a_), b(b_), c(c_), d(d_), e(e_), lambda(lambda_), x0(x0_), y0(y0_) {
-    init(prm);
     this->dx = prm.dx;
+    init(prm);
   }
 
   bool is_inside(int i, int j, Prm prm) override {

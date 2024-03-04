@@ -82,6 +82,17 @@ int main(void) {
     }
     obstacle = new Circle(x0, y0, R, prm);
     prm.L = 2 * R;
+  } else if (object_type == "circle_fin") {
+    double x0, y0, R, Lx, Ly;
+    if (file_input.is_open()) {
+      file_input >> tmp >> x0;
+      file_input >> tmp >> y0;
+      file_input >> tmp >> R;
+      file_input >> tmp >> Lx;
+      file_input >> tmp >> Ly;
+    }
+    obstacle = new Circle_Fin(x0, y0, R, Lx, Ly, prm);
+    prm.L = 2 * R;
   } else if (object_type == "rectangle") {
     double x0, y0, Lx, Ly;
     if (file_input.is_open()) {

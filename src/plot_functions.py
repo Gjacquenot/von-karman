@@ -63,13 +63,22 @@ def get_obstacle(obstacle, nx, ax, folder_object):
     data = read_data_object(folder_object + obstacle + '.txt')
     if obstacle == 'circle':
         x0, y0, radius = data
-        obstacle = Circle((x0, y0), radius, color=color_object, fill=True)
-        ax.add_artist(obstacle)
+        plot = Circle((x0, y0), radius, color=color_object, fill=True)
+        ax.add_artist(plot)
+    if obstacle == 'circle_fin':
+        x0, y0, radius, width, height = data
+        plot_c = Circle((x0, y0), radius, color=color_object, fill=True)
+        x0_r = x0 + radius + width / 2
+        y0_r = y0
+        plot_r = Rectangle(
+            (x0_r - width / 2, y0_r - height / 2), width, height, color=color_object, fill=True)
+        ax.add_artist(plot_c)
+        ax.add_artist(plot_r)
     elif obstacle == 'rectangle':
         x0, y0, width, height = data
-        obstacle = Rectangle(
+        plot = Rectangle(
             (x0 - width / 2, y0 - height / 2), width, height, color=color_object, fill=True)
-        ax.add_artist(obstacle)
+        ax.add_artist(plot)
     elif obstacle == 'mountain':
         # mountain is the 1D function f(x) = y0 - sqrt(lambda ^ 2 (x - x0) ^ 2
         # + h ^ 2)
@@ -88,7 +97,7 @@ def get_obstacle(obstacle, nx, ax, folder_object):
             5 * nx)
         YY1 = y0 + np.sqrt(y0 - np.sqrt(lamb**2 * (XX - x0)**2 + h**2))
         YY2 = 0
-        obstacle = ax.fill_between(XX, YY1, YY2, color=color_object)
+        plot = ax.fill_between(XX, YY1, YY2, color=color_object)
     elif obstacle == 'airfoil':
         a, b, c, d, e, lamb, x0, y0 = data
         # airfoil is the 1D function f(x) = y0 + a * sqrt(x - x0) + b * (x
@@ -98,4 +107,4 @@ def get_obstacle(obstacle, nx, ax, folder_object):
             (XX - x0)**2 + d * (XX - x0)**3 + e * (XX - x0)**4
         YY2 = y0 - lamb * (a * np.sqrt(XX - x0) + b * (XX - x0) +
                            c * (XX - x0)**2 + d * (XX - x0)**3 + e * (XX - x0)**4)
-        obstacle = ax.fill_between(XX, YY1, YY2, color=color_object)
+        plot = ax.fill_between(XX, YY1, YY2, color=color_object)

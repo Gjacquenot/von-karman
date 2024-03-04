@@ -45,7 +45,8 @@ In order to accurately implement these boundary conditions, we made use of the \
   \label{fig: ghostCells}
 \end{figure}
 
-As an example, if $u_{0,j}$ denotes the horizontal component of $\vf{u}$ at the left boundary and height $j$ (counting from 0), then it will be approximated by $2U-u_{1,j}$, where $u_{1,j}$ is the horizontal component of $\vf{u}$ at the first cell inside the domain and the same height $j$. Similarly, we obtain values for $v_{0,j}$ and $p_{0,j}$ as
+As an example, if $u_{0,j}$ denotes the horizontal component of $\vf{u}$ at the left boundary and height $j$ (counting from 0), then it will be approximated by $2U-u_{1,j}$, where $u_{1,j}$ is the horizontal component of $\vf{u}$ at the first cell inside the domain and the same height $j$. A straightforward Taylor expansion around the boundary point (say $u_{1/2,j}$) shows us that indeed this approximation is of second order.
+Similarly, we obtain values for $v_{0,j}$ and $p_{0,j}$ as
 
 $$
   v_{0,j} = -v_{1,j}, \quad p_{0,j} = p_{1,j}
@@ -62,14 +63,14 @@ In this section we discuss our numerical solver to integrate \cref{eq: incompres
 The idea of the method is to first predict the velocities for the next time step by solving the advection and the diffusion term. With the intermediate velocity field we solve the Poisson equation with a finite difference method (described below). Finally, the \textit{projection step} is preformed, and the velocity field is updated with the new pressure field.
 To ensure that the boundary conditions are met, we impose the conditions for the velocity right before solving the Poisson equation and at the end of each iteration. The boundary conditions for the pressure are imposed after solving the Poisson equation and before correcting the velocities in the projection step.
 
-Next, we provide a summary of the steps in our method:
+Next, we provide a summary of the steps in our method. Assuming we know the velocity field at time $t^n$, $\vf{u}^n$, we want to compute the velocity field at time $t^{n+1}$, $\vf{u}^{n+1}$.
 \begin{enumerate}
-  \item $\displaystyle  \frac{\vf{u}^a-\vf{u}^n}{\Delta t} + \vf{u}^n \cdot \nabla \vf{u}^n = 0$
-  \item $\displaystyle  \frac{\vf{u}^* - \vf{u}^a}{\Delta t} = \frac{1}{\Rey} \laplacian \vf{u}^n$
+  \item Solve for $\vf{u}^a$ in $\displaystyle  \frac{\vf{u}^a-\vf{u}^n}{\Delta t} + \vf{u}^n \cdot \nabla \vf{u}^n = 0$ using a semi-Lagrangian method.
+  \item Solve for $\vf{u}^*$ in $\displaystyle  \frac{\vf{u}^* - \vf{u}^a}{\Delta t} = \frac{1}{\Rey} \laplacian \vf{u}^n$.
   \item Set the boundary conditions for the intermediate velocity field $\vf{u}^*$ and impose set the velocity field $\vf{u}^*$ inside the object to be zero (forcing term).
-  \item $\displaystyle \laplacian p^{n} = \frac{1}{\Delta t}\nabla \cdot \vf{u}^*$
+  \item Solve the Poisson equation for the pressure $\displaystyle \laplacian p^{n} = \frac{1}{\Delta t}\nabla \cdot \vf{u}^*$.
   \item Set the boundary conditions for the pressure $p^{n}$.
-  \item $\displaystyle \vf{u}^{n+1} = \vf{u}^* - \Delta t\nabla p^{n}$
+  \item Project the pressure to the intermediate velocity to obtain the new velocity at time $t^{n+1}$ $\displaystyle \vf{u}^{n+1} = \vf{u}^* - \Delta t\nabla p^{n}$.
   \item Set the boundary conditions for the velocity field $\vf{u}^{n+1}$.
 \end{enumerate}
 From these equations, one can easily check that we have:
@@ -100,6 +101,7 @@ The following discretization for the material derivative is used:
   \frac{\vf{u}(\vf{x}_{i,j},t^{n+1})  - \vf{u}(\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta t,t^n)}{\Delta t}
 \end{equation*}
 
+Here we are approximating the solution along a characteristic line, which will generally differ from the actual characteristic associated to the solution at that point, with a constant velocity of $\vf{u}(\vf{x}_{i,j},t^n)$ at each grid point $\vf{x}_{i,j}$.
 The reader may rapidly notice that the point $\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta$ will not in general be in the grid, and thus, we will not have the respective value of the velocity field. To solve this problem, we will make use of bilinear interpolation between the four (in 2D) nearest grid points to the point $\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta t$. This will give us an approximation of the velocity field at the point $\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta t$, which in turn will give us the convected velocity field $\vf{u}^a$.
 
 Furthermore, to improve the accuracy of the method we use the back-and-forth method \cite{backforth}. This method first advects the velocity field using the method described above, and then advects back with opposite velocity $\vf{u}\to -\vf{u}$. With this we can have an estimate of the error we are comitting when comparing the last result with the initial position. Using this information we can correct the velocity field and obtain a more accurate result. The steps are reproduced below. In order to make things more clear, we will consider the general case:
@@ -113,6 +115,10 @@ Furthermore, to improve the accuracy of the method we use the back-and-forth met
   \item Advect the field $\vf{\tilde{\psi}}^a$ with velocity $-\vf{u}$ to obtain $\vf{\bar{\psi}}^a$.
   \item Advect the field $\vf{\psi}^n + \frac{1}{2} (\vf{{\psi}}^n - \vf{\bar{\psi}}^a)$ with velocity $\vf{u}$ to obtain $\vf{\psi}^a$.
 \end{enumerate}
+
+Last but not least, as in all hyperbolic equations, the Courant-Friedrichs-Lewy (CFL) condition must be satisfied. This condition states that the time step $\Delta t$ must be chosen such that the real solution propagates at most at the same speed as the numerical solution. Thus, since we are using an explicit scheme we must impose a CFL of
+
+$$u \frac{\Delta t}{\Delta x} +v \frac{\Delta t}{\Delta y}\leq 1$$
 
 \subsubsection*{Diffusion term}
 As a second step we add diffusion using a 2nd order central differences. The diffusion term is given by:
@@ -182,4 +188,6 @@ As a final step, we compute the gradient of the pressure field and update the ve
   \frac{p_{i+1,j}^{n} - p_{i,j}^{n}}{\Delta x}, \frac{p_{i,j+1}^{n} - p_{i,j}^{n}}{\Delta y}
   \right)
 \end{equation*}
+
+\subsubsection*{Implementation}
 
