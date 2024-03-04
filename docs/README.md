@@ -43,4 +43,16 @@ The following is an example of the evolution of the Von Kármán vortex street, 
 
 <!-- add video in data/videos/circle_Re=500.0.mp4 -->
 
-[![Von Kármán vortex street, circle, Re=500](https://img.youtube.com/vi/3J3z3z3z3z3/0.jpg)](https://www.youtube.com/watch?v=3J3z3z3z3z3)
+https://github.com/victorballester7/von-karman/assets/78110444/ef5da9ef-3f67-44c4-bcba-cd4eb07d0270
+
+Circle at Re = 500
+
+
+https://github.com/victorballester7/von-karman/assets/78110444/2d75f60b-4d38-431c-b721-f691c689a034
+
+Circle with a fin at Re = 500
+
+
+https://github.com/victorballester7/von-karman/assets/78110444/77fc098b-49ff-458b-99cc-7e5267056435
+
+Airfoil at Re = 5000
