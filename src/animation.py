@@ -100,7 +100,8 @@ def animate(folder_path: str, folder_object, obstacle, save: bool = False):
 
     if save:
         # Save the animation
-        ani.save('animation.mp4', writer='ffmpeg', fps=FPS)
+        filename = 'data/videos/' + obstacle + '_Re=' + str(Re) + '.mp4'
+        ani.save(filename, writer='ffmpeg', dpi=300, fps=FPS)
     else:
         # Show the animation
         plt.show()
@@ -121,4 +122,9 @@ if animation_on == False:
     print("Animation is off. Exiting...")
     sys.exit()
 
-animate(folder_results, folder_object, obstacle)
+# if there is an argument, then save the animation
+if len(sys.argv) > 1:
+    save = True
+    animate(folder_results, folder_object, obstacle, save)
+else:
+    animate(folder_results, folder_object, obstacle)

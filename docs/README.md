@@ -25,8 +25,22 @@ Then, you can compile and run the code (having previously check your input param
 ./run.sh
 ```
 
+If you get an error, you may need to activate the execution permissions of the file `run.sh` with the following command:
+
+```
+chmod +x run.sh
+```
+
 If activated in the file `config/input.txt` (check the readme of the input file in `docs/input_README.txt`), the code will also animate the solution.
 
 ## Other information
 
-The code is mainly in the `src` folder, and the headers are in the `include` folder. In the `data` folder you can find the input file and the output files. Finally, in the `docs` folder you can find the documentation of the input file and other papers with information about the Von Kármán vortex street and numerical methods used in the code.
+The code is mainly in the `src` folder, and the headers are in the `include` folder. In the `config` folder you can find the input file and the output files. Finally, in the `docs` folder you can find the documentation of the input file and other papers with information about the Von Kármán vortex street and numerical methods used in the code.
+
+## Results
+
+The following is an example of the evolution of the Von Kármán vortex street, with a circle as obstacle and a Reynolds number of 500.
+
+<!-- add video in data/videos/circle_Re=500.0.mp4 -->
+
+[![Von Kármán vortex street, circle, Re=500](https://img.youtube.com/vi/3J3z3z3z3z3/0.jpg)](https://www.youtube.com/watch?v=3J3z3z3z3z3)
