@@ -29,7 +29,7 @@
 \fancyhead{}
 \fancyfoot{}
 \setlength{\headheight}{15pt}
-\fancyhead[L]{Numerical Methods Report: V. Ballester and J. Nägerl} %welcher Versuch 
+\fancyhead[L]{V. Ballester and J. Nägerl} %welcher Versuch 
 \fancyhead[R]{\itshape\nouppercase{\leftmark}}
 \fancyfoot[C]{Page \thepage\ }
 \pagestyle{fancy}
@@ -44,7 +44,7 @@
 \usepackage{bibliography}
 
 
-
+%%% ad subsubsection to 
 
 %############################ CODE
 \usepackage{listings}
@@ -80,42 +80,81 @@
 \lstset{style=mystyle}
 
 %############################ Title page
-\newcommand{\mytitle}{Numerical simulation of von Kármán vortex streets}
-\newcommand{\myname}{V. Ballester and J. Nägerl}
-\newcommand{\mysupervisor}{Guillaume Legendre &}
 %################################################
 %############################ Document
 %################################################
+\renewcommand\title{Numerical simulation of von Kármán vortex streets}
+\renewcommand\author{Víctor Ballester\\Jona Nägerl}
+\renewcommand\date{March 05, 2023}
+\newcommand\supervisor{Guillaume Legendre\\Gabriel Turinici}
+\newcommand\department{MIDO department}
+\newcommand\degree{M2 Applied and Theoretical Mathematics}
+
+
 \begin{document}
-
-
 \begin{titlepage}
   \begin{center}
-    \LARGE
-    Report Numerical Methods
-    \vspace{0.5cm}
-    \rule{\textwidth}{1.5pt}
-    \LARGE
-    \textbf{\mytitle}
-    \rule{\textwidth}{1.5pt}
-    \vspace{3cm}
-    \large
-    \\
-
+    \begin{figure}[H]
+      \begin{center}
+        \includegraphics[width=6cm]{0_graphics/dauphine-psl.pdf}
+      \end{center}
+    \end{figure}
+    \vspace*{1.5cm}
+    \textsc{\Large Numerical methods for deterministic and stochastic problems }\\[0.75cm]
+    \rule{150mm}{0.1mm}\\[0.4cm]
+    {\huge \bfseries \title\par}
+    \vspace{0.4cm} % Thesis title
+    \rule{150mm}{0.1mm} \\[1.5cm] % Horizontal line
+    \begin{minipage}[ht]{0.4\textwidth}
+      \begin{flushleft} \large
+        \emph{Authors:}\\[0.2cm]
+        \author % Author name - remove the \href bracket to remove the link
+      \end{flushleft}
+    \end{minipage}
+    \begin{minipage}[ht]{0.4\textwidth}
+      \begin{flushright} \large
+        \emph{Supervisors:} \\[0.2cm]
+        \supervisor % Supervisor name - remove the \href bracket to remove the link  
+      \end{flushright}
+    \end{minipage}\\[3cm]
     \vfill
-    \Large
-    \textbf{\myname}
+    {\large
+      \degree\\[0.2cm]
+      \department\\[0.2cm]
+    }
+    % \vfill
+    \rule{80mm}{0.1mm}\\[0.5cm]
+    {\large \date}\\[0.2cm]
     \vfill
-    \large
-    Paris, February 27\textsuperscript{th}, 2024
-    \vfill
-    \includegraphics[width = 0.4\textwidth]{0_graphics/dauphine-psl_2.png}
-    \vfill
-    \normalsize
-
-
   \end{center}
+  \newpage
 \end{titlepage}
+% \begin{center}  
+% \LARGE
+% Report Numerical Methods  
+% \vspace{0.5cm} 
+% \rule{\textwidth}{1.5pt}
+% \LARGE
+% \textbf{\mytitle}
+% \rule{\textwidth}{1.5pt}
+% \vspace{3cm}    
+% \large
+% \\
+
+% \vfill
+% \Large
+% \textbf{\myname}
+% \vfill
+% \large
+% Paris, February 27\textsuperscript{th}, 2024     
+% \vfill
+% \includegraphics[width = 0.4\textwidth]{0_graphics/dauphine-psl_2.png}
+% \vfill
+% \normalsize
+
+
+% \end{center}
+% \end{titlepage}
 
 % change color of the links (linkcolor)
 \hypersetup{linkcolor=black}
@@ -128,17 +167,17 @@
 \newpage
 \section{Introduction} \label{sec: intro}
 \input{1_Sections/1_intro}
-\newpage
+% \newpage
 
 \section{Methods}\label{sec: methods}
 \input{1_Sections/2_methods}
-\newpage
+% \newpage
 
 \section{Results}\label{sec: results}
 \input{1_Sections/3_numeric}
-\newpage
+% \newpage
 
-\section{Discussion}
+\section{Conclusion}
 \input{1_Sections/4_conclusion}\label{sec: conclusion}
 \newpage
 
@@ -152,8 +191,6 @@
 \addcontentsline{toc}{section}{References}
 \printbibliography
 
-\newpage
-\section{Appendix}
-\input{1_Sections/5_Appendix}
+% \newpage
 \end{document}
 

@@ -10,24 +10,24 @@ In our approach we simplify the problem to a two-dimensional incompressible visc
   \nabla\cdot \textbf{u} = 0 \notag
 \end{align}
 
-where $\rho$ is the mass density (assumed constant), $\textbf{u} = (u,v)$ is the fluid velocity with horizontal component $u$ and vertical component $v$, $\mu$ is the dynamic viscosity of the fluid and $p$ is the pressure. The first equation encapsulates the momentum balance within the fluid, incorporating the effects of convection (velocity interaction and movement), diffusion (velocity spreading due to viscosity), and the pressure gradient's influence on the fluid motion, whereas the second equation, often termed the continuity equation, asserts the incompressibility of the fluid by ensuring the volume conservation within the flow. The equations can be adimensionalized to obtain the dimensionless \textit{Reynolds number} by looking at
+where $\rho$ is the mass density (assumed constant), $\textbf{u} = (u,v)$ is the fluid velocity with horizontal component $u$ and vertical component $v$, $\mu$ is the dynamic viscosity of the fluid and $p$ is the pressure. The first equation encapsulates the momentum balance within the fluid, incorporating the effects of advection ($\textbf{u} \cdot \nabla \textbf{u}$, velocity interaction and movement), diffusion ($\mu \Delta \textbf{u}$, velocity spreading due to viscosity), and the pressure gradient's influence on the fluid motion ($\nabla p$), whereas the second equation, often termed the \textit{continuity equation}, asserts the incompressibility of the fluid by ensuring the volume conservation within the flow. The equations can be adimensionalized with the following change of variables
 
 \begin{align}
   \Tilde{\textbf{u}} = \frac{\textbf{u}}{U}, \quad \Tilde{p} = \frac{p}{\rho U^2}, \quad \Tilde{\textbf{x}} = \frac{\textbf{x}}{L}, \quad \Tilde{t} = \frac{U}{L}t
 \end{align}
 
-where the characteristic velocity $U$ and length $L$ are used. These quantities represent the typical velocity of the fluid and typical lengthscale. In practice they are taken to be the inflow velocity and the diameter of the object, respectively. Applying these change of variables to \cref{eq: incompressNS}, we get (dropping the tilde for readability):
+where the characteristic velocity $U$ and characteristic length $L$ are used. These quantities represent the typical velocity of the fluid and typical lengthscale. In practice, they are taken to be the inflow velocity and the length of the obstacle in the transverse direction to the flow, respectively. Applying these change of variables to \cref{eq: incompressNS}, we get (dropping the tilde for readability):
 
 \begin{align}
-  \frac{\partial \textbf{u}}{\partial t} + \textbf{u} \cdot \nabla \textbf{u} - \frac{1}{\text{Re}} \Delta \textbf{u} + \nabla p = 0 \\
+  \frac{\partial \textbf{u}}{\partial t} + \textbf{u} \cdot \nabla \textbf{u} - \frac{1}{\text{Re}} \Delta \textbf{u} + \nabla p = 0 \label{eq:Ns_normalized} \\
   \nabla\cdot\vf{u} = 0 \notag
 \end{align}
 
-where the Reynolds number $\Rey = \frac{\rho U L}{\mu}$ measures the ratio between the inertia of the flow and the viscosity of it.
+where the Reynolds number $\Rey := \frac{\rho U L}{\mu}$ is a dimensionless parameter that measures the ratio between the inertia of the flow and the viscosity of it.
 
 \subsubsection*{Boundary conditions}
 %The body is first time mentionend here but will be explained later
-The domain $\Omega$ is the rectangular box without the obstacle. We call the horizontal direction $x$ and the vertical direction $y$-direction. In our study on the left side a laminar flow is coming into the domain. At the beginning the fluid inside the box is at rest. At the horizontal walls a slip condition is imposed and a free flow on the right side is assumed. Therefore we obtain as boundary conditions for the walls:
+The domain $\Omega$ is the rectangular box without the obstacle. We call the horizontal direction $x$-direction and the vertical direction $y$-direction. In our study, on the left side a laminar flow is coming into the domain. At the beginning the fluid inside the box is at rest and pressure is null within the domain. At the horizontal walls a slip condition is imposed and a free flow on the right side is assumed. Therefore we obtain as boundary conditions for the walls:
 
 \begin{itemize}
   \item At time $t=0$, the fluid is at rest, and both velocity and pressure are zero.
@@ -36,33 +36,32 @@ The domain $\Omega$ is the rectangular box without the obstacle. We call the hor
   \item On the horizontal sides, the walls are impenetrable, so that $v = 0$. A slip condition is imposed so that $\frac{\partial u}{\partial y} = 0$ and $\frac{\partial p}{\partial y} = 0$.
 \end{itemize}
 
-In order to accurately implement these boundary conditions, we made use of the \textit{ghost cell} method. This technique involves the addition of a layer of cells outside the domain (see \cref{fig: ghostCells}). These cells are used to approximate at first order the values of the velocity and pressure at the boundary for both Dirichlet and Neumann conditions
+In order to accurately implement these boundary conditions, we make use of the \textit{ghost cell} method. This technique involves the addition of a layer of cells outside the domain (see \cref{fig: ghostCells}), called \textit{ghost cells}. These cells are used to approximate at second order the values of the velocity and pressure at the boundary for both Dirichlet and Neumann boundary conditions.
 
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.5\textwidth]{0_graphics/methods/grid.pdf}
-  \caption{The ghost cell method. The domain $\Omega$ is represented in red and the dots represent the grid cells, the black ones being the inner points and the blue ones, the ghost cells.}
+  \caption{The ghost cell method. The domain $\Omega$ is represented in red and the dots represent the grid cells, the black ones being the inner cells and the blue ones, the ghost cells.}
   \label{fig: ghostCells}
 \end{figure}
 
-As an example, if $u_{0,j}$ denotes the horizontal component of $\vf{u}$ at the left boundary and height $j$ (counting from 0), then it will be approximated by $2U-u_{1,j}$, where $u_{1,j}$ is the horizontal component of $\vf{u}$ at the first cell inside the domain and the same height $j$. A straightforward Taylor expansion around the boundary point (say $u_{1/2,j}$) shows us that indeed this approximation is of second order.
-Similarly, we obtain values for $v_{0,j}$ and $p_{0,j}$ as
+As an example, if $u_{0,j}$ denotes the horizontal component of $\vf{u}$ at the left boundary and height $j$ (counting from 0), then it is approximated by $2U-u_{1,j}$, where $u_{1,j}$ is the horizontal component of $\vf{u}$ at the first cell inside the domain and the same height $j$. A straightforward Taylor expansion around the boundary point (say $u_{1/2,j}$) shows us that indeed this approximation is of second order. Similarly, we obtain values for $v_{0,j}$ and $p_{0,j}$ as
 
 $$
   v_{0,j} = -v_{1,j}, \quad p_{0,j} = p_{1,j}
 $$
 
-The other boundaries are treated in the same way. It should be noted than when computing discrete derivatives, which involve the use of neighboring cells, the computations are carried out only with inner cells, which in turn use ghost cells. But the derivatives itself at ghost cells are never computed.
+The other boundaries are treated in the same way, but exchanging the role between $i$ and $j$ and taking into account the different boundary conditions. It should be noted that when computing discrete derivatives, which involve the use of neighbouring cells, the computations are carried out only on the inner cells, which in turn use ghost cells. But the derivatives themselves at ghost cells are never computed.
 
-We discuss now the treatment of the boundary conditions on the object. In general dealing with the object is not an easy task. For simplicity, we model the presence of a solid body within a fluid by enforcing the fluid velocity to be zero inside the object, which correspond to imposing a no-slip condition at the boundary. We can think of it as a direct forcing method, which is a common approach in the literature, and it is based on the idea of adding a forcing term to the Navier-Stokes equations to account for the presence of the object (see \cite{forcing} for more
+We discuss now the treatment of the boundary conditions on the object. In general dealing with the object is not an easy task. For simplicity, we model the presence of a solid body within a fluid by enforcing the fluid velocity to be zero inside the object, which correspond to imposing a no-slip condition at the boundary. We can think of it as a direct forcing method, which is a common approach in the literature, and it is based on the idea of adding a forcing term to the Navier-Stokes equations to account for the presence of the object (see \cite{forcing} for more details).
 It is very worth-mentioning that the way we integrate the body has an influence on the flow. Especially to study the impacts of coatings or surface structure, our method, is not capable of including these effects, but in our approach we only want to observe the effect, and therefore prioritize simplicity for understanding over complexity for small details in the effect. If the reader is interested in delving deeper into the fluid-structure interactions, including the effects of surface modifications, we recommend consulting works in the field, such as those by Peskin \cite{Peskin1977ImmersedBM} or Schlichting and Gersten \cite{Schlichting2000BoundaryLayerT}.
 
 \subsection{Difference Scheme} \label{sec: diffScheme}
-In this section we discuss our numerical solver to integrate \cref{eq: incompressNS} together with the boundary conditions presented in above section. To simplify the equations, we use \textit{Chorin's projection method}. It was originally introduced by Alexandre Chorin in 1967 \cite{Chorin1967NumericalNS} as an efficient means of solving the incompressible Navier-Stokes equations.
+In this section we discuss our numerical solver to integrate \cref{eq:Ns_normalized} together with the boundary conditions presented in above section. To simplify the equations, we use \textit{Chorin's projection method}. It was originally introduced by Alexandre Chorin in 1967 \cite{Chorin1967NumericalNS} as an efficient means of solving the incompressible Navier-Stokes equations.
 
 The idea of the method is to first predict the velocities for the next time step by solving the advection and the diffusion term. With the intermediate velocity field we solve the Poisson equation with a finite difference method (described below). Finally, the \textit{projection step} is preformed, and the velocity field is updated with the new pressure field.
 
-This method is based on the Helmholtz-Hodge decomposition of a vector field $\vf{F}$, which states that any vector field can be decomposed into a sum of a solenoidal (divergence-free) and an irrotational (curl-free) part. In our of fluid dynamics, this means that the velocity field $\vf{u}^*$ can be decomposed into a sum of a solenoidal part $\vf{u}^{n+1}$ and an irrotational part $\nabla p^{n+1}$, where $p^{n+1}$ is the pressure field at time $t^{n+1}$. The projection step is then used to enforce the incompressibility of the velocity field, and to update the velocity field with the new pressure field.
+This method is based on the Helmholtz-Hodge decomposition of a vector field $\vf{F}$, which states that any vector field can be decomposed into a sum of a solenoidal (divergence-free) and an irrotational (curl-free) part. In our of fluid dynamics, this means that the velocity field $\vf{u}^*$ can be decomposed into a sum of a solenoidal part $\vf{u}^{n+1}$ and an irrotational part $\nabla p^{n+1}$, where $p^{n+1}$ is the pressure field at time $t^{n+1}$. The projection step is then used to enforce the incompressibility of the velocity field, and to update the velocity field with the new pressure field. 
 
 To ensure that the boundary conditions are met, we impose the conditions for the velocity right before solving the Poisson equation and at the end of each iteration. The boundary conditions for the pressure are imposed after solving the Poisson equation and before correcting the velocities in the projection step.
 
@@ -70,29 +69,29 @@ Next, we provide a summary of the steps in our method. Assuming we know the velo
 \begin{enumerate}
   \item Solve for $\vf{u}^a$ in $\displaystyle  \frac{\vf{u}^a-\vf{u}^n}{\Delta t} + \vf{u}^n \cdot \nabla \vf{u}^n = 0$ using a semi-Lagrangian method.
   \item Solve for $\vf{u}^*$ in $\displaystyle  \frac{\vf{u}^* - \vf{u}^a}{\Delta t} = \frac{1}{\Rey} \laplacian \vf{u}^n$.
-  \item Set the boundary conditions for the intermediate velocity field $\vf{u}^*$ and impose set the velocity field $\vf{u}^*$ inside the object to be zero (forcing term).
-  \item Solve the Poisson equation for the pressure $\displaystyle \laplacian p^{n} = \frac{1}{\Delta t}\nabla \cdot \vf{u}^*$.
-  \item Set the boundary conditions for the pressure $p^{n}$.
-  \item Project the pressure to the intermediate velocity to obtain the new velocity at time $t^{n+1}$ $\displaystyle \vf{u}^{n+1} = \vf{u}^* - \Delta t\nabla p^{n}$.
+  \item Set the boundary conditions for the intermediate velocity field $\vf{u}^*$ and impose the velocity field $\vf{u}^*$ inside the object to be zero (forcing term).
+  \item Solve the Poisson equation for the pressure, $\displaystyle \laplacian p^{n+1} = \frac{1}{\Delta t}\nabla \cdot \vf{u}^*$.
+  \item Set the boundary conditions for the pressure $p^{n+1}$.
+  \item Project the pressure to the intermediate velocity to obtain the new velocity at time $t^{n+1}$, $\displaystyle \vf{u}^{n+1} = \vf{u}^* - \Delta t\nabla p^{n+1}$.
   \item Set the boundary conditions for the velocity field $\vf{u}^{n+1}$.
 \end{enumerate}
 From these equations, one can easily check that we have:
 \begin{align*}
-  \frac{\vf{u}^{n+1}-\vf{u}^n}{\Delta t} + \vf{u}^n \cdot \nabla \vf{u}^n - \frac{1}{\Rey} \laplacian \vf{u}^n + \nabla p^{n} & = 0 \\
+  \frac{\vf{u}^{n+1}-\vf{u}^n}{\Delta t} + \vf{u}^n \cdot \nabla \vf{u}^n - \frac{1}{\Rey} \laplacian \vf{u}^n + \nabla p^{n+1} & = 0 \\
   \nabla \cdot \vf{u}^{n+1}                                                                                                   & = 0
 \end{align*}
 
-In the following sections we will deepen in how do we compute each of the above steps in our method.
+In the following sections we deepen in how do we compute each of the above steps in our method.
 
 \subsubsection*{Semi-Lagrangian method}
 % What is a Semi-Langrangian method
-The Semi-Lagrangian method represents a powerful approach to solving fluid dynamics problems, particularly in the context of advection. Unlike Eulerian methods, which compute changes at fixed points in space, the Semi-Lagrangian (SL) method tracks the motion of fluid parcels. SL methods slightly differ from Lagrangian methods, as the word suggest. The second ones are rarely used in numerical methods because the particle trajectories become chaotic and wildly mixed in a short period of time. However, SL algorithms avoid this problem by `reinitializing' the Lagrangian coordinate system after each time step \cite{Boyd2001ChebyshevFourier}. There are several ways to implement a SL method, and we will describe the one we used in our method. Our goal in this subsection is on solving:
+The Semi-Lagrangian (SL) method represents a powerful approach to solving fluid dynamics problems, particularly in the context of advection. Unlike Eulerian methods, which compute changes at fixed points in space, the SL method tracks the motion of fluid parcels. SL methods slightly differ from Lagrangian methods, as the word suggests. The second ones are rarely used in numerical methods because the particle trajectories become chaotic and wildly mixed in a short period of time. However, SL algorithms avoid this problem by \textit{reinitializing} the Lagrangian coordinate system after each time step \cite{Boyd2001ChebyshevFourier}. There are several ways to implement a SL method, and we describe here the one we used in our method. Our goal in this subsection is on solving:
 
 \begin{equation*}
   \frac{\mathrm{D}\vf{u}}{\mathrm{D}t} = \pdv{\vf{u}}{t} + \vf{u} \cdot \nabla \vf{u} = 0
 \end{equation*}
 
-The idea is to somehow discretize the material derivative. To do that, if we call $\vf{u}^n$ the current velocity field and $\vf{u}^a$ the velocity field after the convection step, we can write a difference formula as:
+The idea is to somehow discretize the material derivative. To do that, if we call $\vf{u}^n$ the current velocity field and $\vf{u}^a$ the velocity field after the advection step, we can write a difference formula as:
 
 \begin{equation*}
   \frac{\vf{u}^a- \vf{u}^n}{\Delta t} + \vf{u}^n \cdot \nabla \vf{u}^n = 0
@@ -101,13 +100,13 @@ The idea is to somehow discretize the material derivative. To do that, if we cal
 The following discretization for the material derivative is used:
 
 \begin{equation*}
-  \frac{\vf{u}(\vf{x}_{i,j},t^{n+1})  - \vf{u}(\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta t,t^n)}{\Delta t}
+  \frac{\vf{u}(\vf{x}_{i,j},t^{n+1})  - \vf{u}(\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta t,t^n)}{\Delta t} = 0
 \end{equation*}
 
-Here we are approximating the solution along a characteristic line, which will generally differ from the actual characteristic associated to the solution at that point, with a constant velocity of $\vf{u}(\vf{x}_{i,j},t^n)$ at each grid point $\vf{x}_{i,j}$.
-The reader may rapidly notice that the point $\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta$ will not in general be in the grid, and thus, we will not have the respective value of the velocity field. To solve this problem, we will make use of bilinear interpolation between the four (in 2D) nearest grid points to the point $\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta t$. This will give us an approximation of the velocity field at the point $\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta t$, which in turn will give us the convected velocity field $\vf{u}^a$.
+Here we are approximating the solution along a characteristic line, which generally differs from the actual characteristic associated to the solution at that point, with a constant velocity of $\vf{u}(\vf{x}_{i,j},t^n)$ at each grid point $\vf{x}_{i,j}$.
+The reader may rapidly notice that the point $\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta t$ is not in general in the grid, and thus, we don't have the respective value of the velocity field. To solve this problem, we make use of bilinear interpolation between the four (in 2D) surrounding grid points to the point $\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta t$. This gives us an approximation of the velocity field at the point $\vf{x}_{i,j} - \vf{u}(\vf{x}_{i,j},t^n)\Delta t$, which in turn provides us with the advected velocity field $\vf{u}^a$.
 
-Furthermore, to improve the accuracy of the method we use the back-and-forth method \cite{backforth}. This method first advects the velocity field using the method described above, and then advects back with opposite velocity $\vf{u}\to -\vf{u}$. With this we can have an estimate of the error we are comitting when comparing the last result with the initial position. Using this information we can correct the velocity field and obtain a more accurate result. The steps are reproduced below. In order to make things more clear, we will consider the general case:
+Furthermore, to improve the accuracy of the method we use the back-and-forth method \cite{backforth}. This method first advects the velocity field using the method described above, and then advects back with opposite velocity $\vf{u}\to -\vf{u}$. With this, we can have an estimate of the error we are comitting when comparing the last result with the initial position. Using this information we can correct the initial velocity field and obtain a more accurate result. The steps are reproduced below. In order to make things more clear, we consider the general case:
 
 \begin{equation*}
   \frac{\mathrm{D}\vf{\psi}}{\mathrm{D}t} = \pdv{\vf{\psi}}{t} + \vf{u} \cdot \nabla \vf{\psi} = 0
@@ -119,12 +118,14 @@ Furthermore, to improve the accuracy of the method we use the back-and-forth met
   \item Advect the field $\vf{\psi}^n + \frac{1}{2} (\vf{{\psi}}^n - \vf{\bar{\psi}}^a)$ with velocity $\vf{u}$ to obtain $\vf{\psi}^a$.
 \end{enumerate}
 
+In our case, the field $\vf\psi$ exactly corresponds to the same velocity field $\vf{u}$. This approach has been proved to be stable and improving considerably the accuracy of the method \cite{backforth}. 
+
 Last but not least, as in all hyperbolic equations, the Courant-Friedrichs-Lewy (CFL) condition must be satisfied. This condition states that the time step $\Delta t$ must be chosen such that the real solution propagates at most at the same speed as the numerical solution. Thus, since we are using an explicit scheme we must impose a CFL of
 
-$$u \frac{\Delta t}{\Delta x} +v \frac{\Delta t}{\Delta y}\leq 1$$
+$$|u|_{\text{max}} \frac{\Delta t}{\Delta x} +|v|_{\text{max}} \frac{\Delta t}{\Delta y}\leq 1$$
 
 \subsubsection*{Diffusion term}
-As a second step we add diffusion using a 2nd order central differences. The diffusion term is given by:
+As a second step we add diffusion using a second order central differences. The diffusion term is given by:
 
 \begin{equation*}
   \frac{\vf{u}^* - \vf{u}^a}{\Delta t} = \frac{1}{\Rey} \laplacian \vf{u}^n
@@ -136,16 +137,16 @@ Once discretized we get, for each $i$, $j$ in the grid:
   \vf{u}^*_{i,j} = \vf{u}^a_{i,j} + \frac{\Delta t}{\Rey}\left( \frac{\vf{u}^n_{i+1,j} - 2\vf{u}^n_{i,j} + \vf{u}^n_{i-1,j}}{{(\Delta x)}^2} + \frac{\vf{u}^n_{i,j+1} - 2\vf{u}^n_{i,j} + \vf{u}^n_{i,j-1}}{{(\Delta y)}^2}\right)
 \end{equation*}
 
-As before, we write concisely the discretization in vector form but in practice we do it for each component of the velocity field separately.
+We write concisely the discretization in vector form, but in practice we do it for each component of the velocity field separately.
 
 \subsubsection*{Solving for the Poisson equation}\label{sec: solvingPoisson}
-There are several efficient ways to compute the solution of the general Poisson equation $\Delta p = f$. In our case, we have to equip this equation with the boundary conditions $\partial_{\vf{n}}p=0$ on the left, top and bottom boundaries, and $p=0$ on the right boundary. We will use a finite difference method to solve this equation. The idea is to discretize the domain into a grid and use the finite difference method to solve the equation. We will use a 5-point stencil to approximate the Laplacian operator. The 5-point stencil is given by:
+There are several efficient ways to compute the solution of the general Poisson equation $\Delta p = f$. In our case, we have to equip this equation with the boundary conditions $\partial_{\vf{n}}p=0$ on the left, top and bottom boundaries, and $p=0$ on the right boundary. We use a finite difference method to solve this equation with a 5-point stencil to approximate the Laplacian operator. The 5-point stencil is given by:
 
 \begin{equation*}
   \laplacian p_{i,j} = \frac{p_{i+1,j} - 2 p_{i,j} + p_{i-1,j}}{{(\Delta x)}^2} + \frac{p_{i,j+1} - 2 p_{i,j} + p_{i,j-1}}{{(\Delta y)}^2}
 \end{equation*}
 
-If we set $\vf{p}:=(p_{11}, p_{12}, \ldots, p_{1n_y}, p_{21}, \ldots, p_{22}, \ldots, p_{2n_y},\ldots p_{n_xn_y})$, we can write our problem in matrix form as $\vf{A}\vf{p}=\vf{f}$, where $\vf{f}$ contains the discrete values of the right-hand side of the Poisson equation in the same order as $\vf{p}$, and $\vf{A}$ is a matrix that contains the coefficients of the Laplacian operator. Let's describe how we can build the matrix $\vf{A}$. Let $\vf{A}=\vf{X} + \vf{Y}$, where $\vf{X}$ and $\vf{Y}$ are the matrices that contain the coefficients of the Laplacian operator in the $x$ and $y$ directions, respectively. We can write $\vf{X}$ and $\vf{Y}$ as:
+If we set $\vf{p}:=(p_{1,1}, p_{1,2}, \ldots, p_{1,n_y}, p_{2,1}, p_{2,2}, \ldots, p_{2,n_y},\ldots, p_{n_x,1},p_{n_x,2},\ldots p_{n_x,n_y})$, we can write our problem in matrix form as $\vf{A}\vf{p}=\vf{f}$, where $\vf{f}$ contains the discrete values at the grid points of the right-hand side of the Poisson equation in the same order as $\vf{p}$, and $\vf{A}$ is a matrix that contains the coefficients of the discrete Laplacian. Let's describe how we can build the matrix $\vf{A}$. Let $\vf{A}=\vf{X} + \vf{Y}$, where $\vf{X}$ and $\vf{Y}$ denote the matrices that contain the coefficients of the Laplacian operator in the $x$ and $y$ directions, respectively. We can write $\vf{X}$ and $\vf{Y}$ as:
 
 \begin{equation*}
   \vf{X} = \begin{pmatrix}
@@ -153,7 +154,7 @@ If we set $\vf{p}:=(p_{11}, p_{12}, \ldots, p_{1n_y}, p_{21}, \ldots, p_{22}, \l
     \vf{I}_{n_y}  & -2\vf{I}_{n_y} & \vf{I}_{n_y}   & \ddots       &                & \vdots         \\
     \vf{0}        & \vf{I}_{n_y}   & -2\vf{I}_{n_y} & \vf{I}_{n_y} & \ddots         & \vdots         \\
     \vdots        & \ddots         & \ddots         & \ddots       & \ddots         & \vf{0}         \\
-    \vdots        &                & \ddots         & \vf{I}_{n_y} & -2\vf{I}_{n_y} & -\vf{I}_{n_y}  \\
+    \vdots        &                & \ddots         & \vf{I}_{n_y} & -2\vf{I}_{n_y} & \vf{I}_{n_y}  \\
     \vf{0}        & \cdots         & \cdots         & \vf{0}       & \vf{I}_{n_y}   & -3\vf{I}_{n_y} \\
   \end{pmatrix}\quad
   \vf{Y} = \begin{pmatrix}
@@ -176,21 +177,18 @@ $$
   \end{pmatrix}\in\mathcal{M}_{n_y}(\mathbb{R})
 $$
 
-Both $\vf{X}$ and $\vf{Y}$ are block matrices, composed of $n_x$ matrices of size $n_y\times n_y$ each, which results in a matrix of size $n_xn_y\times n_xn_y$.
-The boundary conditions (using ghost cells) on the pressure are applied at both the first and last block row of $\vf{X}$ and the first and last row of $\vf{Y}$.
+Both $\vf{X}$ and $\vf{Y}$ are block matrices, composed of $n_x$ matrices in each row and column of size $n_y\times n_y$ each, which results in a matrix of size $n_xn_y\times n_xn_y$. 
+The boundary conditions (using ghost cells) on the pressure are applied at both the first and last block rows of $\vf{X}$ and the first and last rows of $\vf{B}$.
 
-In order to solve the resulting system, we have used the Cholesky decomposition, which requires the matrix to be symmetric and positive definite. The matrix $\vf{A}$ is symmetric, but it is not positive definite. In fact, it can be seen that it is negative definite. Thus, in our case, we will be solving the equivalent system $-\vf{A} \vf{p} = -\vf{f}$.
+In order to solve the resulting system, we use the Cholesky decomposition, which requires the matrix to be symmetric and positive definite. The matrix $\vf{A}$ is symmetric, but it is not positive definite. In fact, it can be seen that it is negative definite. Thus, in our case, we solve the equivalent system $-\vf{A} \vf{p} = -\vf{f}$.
 
 
 \subsubsection*{Updating velocities}
 
-As a final step, we compute the gradient of the pressure field and update the velocity field. The gradient of the pressure field is computed using a 2nd order central differences. The update of the velocity field is given by:
+As a final step, we compute the gradient of the pressure field and update the velocity field. The gradient of the pressure field is computed using a 2nd order central differences scheme. The update of the velocity field is given by:
 
 \begin{equation*}
   \vf{u}_{i,j}^{n+1} = \vf{u}_{i,j}^* - \Delta t \left(
   \frac{p_{i+1,j}^{n} - p_{i,j}^{n}}{\Delta x}, \frac{p_{i,j+1}^{n} - p_{i,j}^{n}}{\Delta y}
   \right)
 \end{equation*}
-
-\subsubsection*{Implementation}
-
