@@ -131,7 +131,7 @@ As a second step we add diffusion using a second order central differences. The 
   \frac{\vf{u}^* - \vf{u}^a}{\Delta t} = \frac{1}{\Rey} \laplacian \vf{u}^n
 \end{equation*}
 
-Once discretized we get, for each $i$, $j$ in the grid:
+Once discretized we get for each $i$, $j$ in the grid:
 
 \begin{equation*}
   \vf{u}^*_{i,j} = \vf{u}^a_{i,j} + \frac{\Delta t}{\Rey}\left( \frac{\vf{u}^n_{i+1,j} - 2\vf{u}^n_{i,j} + \vf{u}^n_{i-1,j}}{{(\Delta x)}^2} + \frac{\vf{u}^n_{i,j+1} - 2\vf{u}^n_{i,j} + \vf{u}^n_{i,j-1}}{{(\Delta y)}^2}\right)
@@ -146,7 +146,7 @@ There are several efficient ways to compute the solution of the general Poisson 
   \laplacian p_{i,j} = \frac{p_{i+1,j} - 2 p_{i,j} + p_{i-1,j}}{{(\Delta x)}^2} + \frac{p_{i,j+1} - 2 p_{i,j} + p_{i,j-1}}{{(\Delta y)}^2}
 \end{equation*}
 
-If we set $\vf{p}:=(p_{1,1}, p_{1,2}, \ldots, p_{1,n_y}, p_{2,1}, p_{2,2}, \ldots, p_{2,n_y},\ldots, p_{n_x,1},p_{n_x,2},\ldots p_{n_x,n_y})$, we can write our problem in matrix form as $\vf{A}\vf{p}=\vf{f}$, where $\vf{f}$ contains the discrete values at the grid points of the right-hand side of the Poisson equation in the same order as $\vf{p}$, and $\vf{A}$ is a matrix that contains the coefficients of the discrete Laplacian. Let's describe how we can build the matrix $\vf{A}$. Let $\vf{A}=\vf{X} + \vf{Y}$, where $\vf{X}$ and $\vf{Y}$ denote the matrices that contain the coefficients of the Laplacian operator in the $x$ and $y$ directions, respectively. We can write $\vf{X}$ and $\vf{Y}$ as:
+If we set $\vf{p}:=(p_{1,1}, p_{1,2}, \ldots, p_{1,n_y}, p_{2,1}, p_{2,2}, \ldots, p_{2,n_y},\ldots, p_{n_x,1},p_{n_x,2},\ldots p_{n_x,n_y})$, we can write our problem in matrix form as $\vf{A}\vf{p}=\vf{f}$, where $\vf{f}$ contains the discrete values at the grid points of the right-hand side of the Poisson equation in the same order as $\vf{p}$, and $\vf{A}$ is a matrix that contains the coefficients of the discrete Laplacian. To describe how we can build the matrix $\vf{A}$, let $\vf{A}=\vf{X} + \vf{Y}$, where $\vf{X}$ and $\vf{Y}$ denote the matrices that contain the coefficients of the Laplacian operator in the $x$ and $y$ directions, respectively. We can write $\vf{X}$ and $\vf{Y}$ as:
 
 \begin{equation*}
   \vf{X} = \begin{pmatrix}
