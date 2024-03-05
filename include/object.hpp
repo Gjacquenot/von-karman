@@ -286,46 +286,6 @@ class Rectangle : public Object {
   }
 };
 
-class Mountain : public Object {
-  // function defined by:
-  // f(x) = y0 - sqrt(lambda ^ 2 (x - x0) ^ 2 + h ^ 2)
-
- public:
-  double x0, y0, h, lambda;
-  Mountain(double x0_, double y0_, double h_, double lambda_, Prm prm) : x0(x0_), y0(y0_), h(h_), lambda(lambda_) {
-    init(prm);
-  }
-
-  bool is_inside(int i, int j, Prm prm) override {
-    if (y(j) < 0) {
-      return false;
-    }
-    return y(j) < f(x(i));
-  }
-
-  double f(double x) {
-    return y0 - sqrt(lambda * lambda * (x - x0) * (x - x0) + h * h);
-  }
-
-  Point closest_boundary_point(double x, double y) override {
-    // we do linear interpolation to find the closest point on the boundary
-    // horizontal distance to the boundary
-    double X11 = sqrt((y - y0) * (y - y0) - h * h) / lambda + x0;
-    double X12 = -sqrt((y - y0) * (y - y0) - h * h) / lambda + x0;
-    double X1 = (abs(x - X11) < abs(x - X12)) ? X11 : X12;
-    double Y1 = y0;
-    double X2 = x0;
-    double Y2 = f(x);
-    // line equation from (X1, Y1) to (X2, Y2) is g(X) = Y1 + m * (X - X1)
-    // perpendicular line passing through (x, y) is h(X) = y - (X - x) / m
-    // we solve g(X) = h(X) to find the closest point
-    double m = (Y2 - Y1) / (X2 - X1);
-    double X = (m * m * X1 + x + m * y - m * Y1) / (m * m + 1);
-    double Y = Y1 + m * (X - X1);
-    return {X, Y};
-  }
-};
-
 class Airfoil : public Object {
   // f(x) = a * sqrt(x - x0) + b * (x - x0) + c * (x - x0)^2 + d * (x - x0)^3 + e * (x - x0)^4
   // equation for the upper part of the airfoil:
@@ -351,10 +311,12 @@ class Airfoil : public Object {
     return true;
   }
 
+  // equation for the upper part of the airfoil.
   double f_top(double x) {
     return y0 + a * sqrt(x - x0) + b * (x - x0) + c * (x - x0) * (x - x0) + d * (x - x0) * (x - x0) * (x - x0) + e * (x - x0) * (x - x0) * (x - x0) * (x - x0);
   }
 
+  // equation for the lower part of the airfoil.
   double f_bottom(double x) {
     return y0 - lambda * (a * sqrt(x - x0) + b * (x - x0) + c * (x - x0) * (x - x0) + d * (x - x0) * (x - x0) * (x - x0) + e * (x - x0) * (x - x0) * (x - x0) * (x - x0));
   }

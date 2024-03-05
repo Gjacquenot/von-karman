@@ -103,16 +103,6 @@ int main(void) {
     }
     obstacle = new Rectangle(x0, y0, Lx, Ly, prm);
     prm.L = Ly;
-  } else if (object_type == "mountain") {
-    double x0, y0, h, lambda;
-    if (file_input.is_open()) {
-      file_input >> tmp >> x0;
-      file_input >> tmp >> y0;
-      file_input >> tmp >> h;
-      file_input >> tmp >> lambda;
-    }
-    obstacle = new Mountain(x0, y0, h, lambda, prm);
-    prm.L = y0 - h;
   } else if (object_type == "airfoil") {
     double a, b, c, d, e, lambda, x0, y0;
     if (file_input.is_open()) {
@@ -174,22 +164,7 @@ int main(void) {
     adv_u[i] = 0;
     adv_v[i] = 0;
   }
-  // double* u = (double*)calloc(prm.NXNY, sizeof(double));      // x component of velocity, initialized to 0 by calloc
-  // double* ustar = (double*)calloc(prm.NXNY, sizeof(double));  // x component of velocity, initialized to 0 by calloc
-  // double* v = (double*)calloc(prm.NXNY, sizeof(double));      // y component of velocity, initialized to 0 by calloc
-  // double* vstar = (double*)calloc(prm.NXNY, sizeof(double));  // y component of velocity, initialized to 0 by calloc
-  // double* w = (double*)calloc(prm.NXNY, sizeof(double));      // vorticity (only 1 component, because it is 2D), initialized to 0 by calloc
-  // double* p = (double*)calloc(prm.NXNY, sizeof(double));      // pressure, initialized to 0 by calloc
-  // // DO NOT ACCESS THE GHOST POINTS OF THESE ARRAYS
-  // double* adv_u = (double*)malloc(prm.NXNY * sizeof(double));  // advection term of u
-  // double* adv_v = (double*)malloc(prm.NXNY * sizeof(double));  // advection term of v
 
-  // if (animation) {
-  // file_output_w.open(filename_solution_w);
-  // file_output_u.open(filename_solution_u);
-  // write_sol_w(file_output_w, w, 0, prm);
-  // write_sol(file_output_u, u, v, 0, prm);
-  // }
   saveSetupToHDF5(prm, object_type, vorticity, animation);
   saveDataToHDF5(plot_count, u, v, w, p, prm.NX, prm.NY, t);
   plot_count++;
@@ -350,8 +325,6 @@ int main(void) {
       }
       set_vorticity(ustar, vstar, w, prm);
       saveDataToHDF5(plot_count, ustar, vstar, w, p, prm.NX, prm.NY, t);
-      // write_sol_w(file_output_w, w, t, prm);
-      // write_sol(file_output_u, ustar, vstar, t, prm);
       plot_count++;
     }
 

@@ -1,6 +1,7 @@
 The method was implemented in C++ using the \texttt{Eigen} library for linear algebra operations, particularly for the creation of the sparse matrix $\vf{A}$ described above and the resolution of the resulting linear system using the Cholesky decomposition. We did not make use of parallelization for simplicity, but the reader may note that if more accurate results are needed, using for example a denser grid around the boundary of the object, and thus increasing the size of the discrete domain, parallelization should be a must.
 
-Implementing the numerical scheme outlined in Section \ref{sec: diffScheme}, we have the opportunity to explore the dynamics of fluid flow around various objects. \footnote{For further details on the implementation, we shared our code in the accompanying C++ code documentation.} First, we want to illustrate the emergence of the phenomenon, before delving in different factors on the flow as differences in Reynolds numbers or in the shape of the object.
+Implementing the numerical scheme outlined in Section \ref{sec: diffScheme}, we have the opportunity to explore the dynamics of fluid flow around various objects. \footnote{For further details on the implementation, we shared our code in the accompanying C++ code documentation. There the reader will also find animations of the flow dynamics around different objects to better understand the phenomenon.}
+} First, we want to illustrate the emergence of the phenomenon, before delving in different factors on the flow as differences in Reynolds numbers or in the shape of the object.
 
 \subsection{Observing Karman vortex street}
 % Show that we observe the phenomon describe time evolution, how can we see that the periodic state is achieved etc.  What are our needs for dt, dx etc.

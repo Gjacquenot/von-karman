@@ -14,18 +14,6 @@
 using namespace H5;
 using namespace std;
 
-// template <typename... Args>
-
-// @brief Write the arguments to a temporary file
-// @param args arguments to be written to the file
-// void write_tmp_file(Args... args) {
-//   ofstream file;
-//   file.open("config/tmp_animation.txt");
-//   // write all the arguments to the file one by one (separated by a space)
-//   ((file << args << " "), ...);
-//   file.close();
-// }
-
 // @brief Print a string and a time in a human-readable format (in the form: "string xx.xx units")
 // @param str string to be printed
 // @param time time to be printed
@@ -62,39 +50,11 @@ void print(string str, int64_t time) {
   return;
 }
 
-// @brief Write the euclidean norm of the velocity field to a file
-// @param file file to write the solution
-// @param u velocity in x direction
-// @param v velocity in y direction
-// @param t time at which the solution is written
-// @param prm parameters of the simulation (dx, dy, dt, etc.)
-void write_sol(ofstream& file, double* u, double* v, double t, Prm prm) {
-  file << t << endl;
-  for (int i = 1; i < prm.NX - 1; i++) {
-    for (int j = 1; j < prm.NY - 1; j++) {
-      file << sqrt(U(i, j) * U(i, j) + V(i, j) * V(i, j)) << " ";
-    }
-    file << endl;
-  }
-  file << endl;
-}
-
-// @brief Write the vorticity field to a file
-// @param file file to write the solution
-// @param w vorticity
-// @param t time at which the solution is written
-// @param prm parameters of the simulation (dx, dy, dt, etc.)
-void write_sol_w(ofstream& file, double* w, double t, Prm prm) {
-  file << t << endl;
-  for (int i = 1; i < prm.NX - 1; i++) {
-    for (int j = 1; j < prm.NY - 1; j++) {
-      file << W(i, j) << " ";
-    }
-    file << endl;
-  }
-  file << endl;
-}
-
+// @brief Write the setup parameters to a file
+// @param prm parameters of the simulation
+// @param object_type type of the object
+// @param vorticity_on boolean to check whether we want to plot the vorticity on the animation by default or not
+// @param animation_on boolean to check whether we want to plot the animation or not
 void saveSetupToHDF5(Prm prm, string object_type, bool vorticity_on, bool animation_on) {
   string filename = "output/setup.h5";
   const H5std_string DATASET_NAMES[] = {"Re", "NX", "NY", "LX", "LY",
@@ -133,6 +93,15 @@ void saveSetupToHDF5(Prm prm, string object_type, bool vorticity_on, bool animat
   }
 }
 
+// @brief Write the data to a file
+// @param plot_count index of the plot
+// @param u velocity in the x direction
+// @param v velocity in the y direction
+// @param w voriticity
+// @param p pressure
+// @param Nx number of cells in the x direction (including ghost cells)
+// @param Ny number of cells in the y direction (including ghost cells)
+// @param t time
 void saveDataToHDF5(uint plot_count, double* u, double* v, double* w, double* p, int Nx, int Ny, double t) {
   string filename = "output/results/sol_";
   filename = filename + to_string(plot_count) + ".h5";

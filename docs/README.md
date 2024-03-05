@@ -37,6 +37,12 @@ If activated in the file `config/input.txt` (check the readme of the input file 
 
 The code is mainly in the `src` folder, and the headers are in the `include` folder. In the `config` folder you can find the input file and the output files. Finally, in the `docs` folder you can find the documentation of the input file and other papers with information about the Von Kármán vortex street and numerical methods used in the code.
 
+### Instructions to add a new object shape
+
+In order to add a new object shape, you will need to create a new class in the `object.hpp` file inside the `include` folder. This class will need to inherit from the `Object` class and implement the `is_inside`and `closest_boundary_point` methods (you can check the other classes in the file to see the general idea in how to implement them). Then, in the `src/main.cpp` you will need to add an equivalent `else if` condition for the detection of the object. Finally, you will need to add the object in the python script `src/plot_functions.py` in order to plot the object in the animation.
+
+Finally, create a new input file in the `config` folder with the parameters of the new object and run the code (remember to change the obstacle section in `config/input.txt` with the name of your new shape).
+
 ## Results
 
 The following is an example of the evolution of the Von Kármán vortex street, with different objects and Reynolds numbers. We plot the vorticity field in order to visualize more clearly the formation of the vortices.

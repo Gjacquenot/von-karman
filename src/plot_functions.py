@@ -79,25 +79,6 @@ def get_obstacle(obstacle, nx, ax, folder_object):
         plot = Rectangle(
             (x0 - width / 2, y0 - height / 2), width, height, color=color_object, fill=True)
         ax.add_artist(plot)
-    elif obstacle == 'mountain':
-        # mountain is the 1D function f(x) = y0 - sqrt(lambda ^ 2 (x - x0) ^ 2
-        # + h ^ 2)
-        x0, y0, lamb, h = data
-        XX = np.linspace(
-            x0 -
-            np.sqrt(
-                (y0 ** 2 -
-                 h ** 2) /
-                lamb ** 2),
-            x0 +
-            np.sqrt(
-                (y0 ** 2 -
-                 h ** 2) /
-                lamb ** 2),
-            5 * nx)
-        YY1 = y0 + np.sqrt(y0 - np.sqrt(lamb**2 * (XX - x0)**2 + h**2))
-        YY2 = 0
-        plot = ax.fill_between(XX, YY1, YY2, color=color_object)
     elif obstacle == 'airfoil':
         a, b, c, d, e, lamb, x0, y0 = data
         # airfoil is the 1D function f(x) = y0 + a * sqrt(x - x0) + b * (x
