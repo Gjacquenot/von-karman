@@ -120,9 +120,6 @@ Furthermore, to improve the accuracy of the method we use the back-and-forth met
 
 In our case, the field $\vf\psi$ exactly corresponds to the same velocity field $\vf{u}$. This approach has been proved to be stable and improving considerably the accuracy of the method \cite{backforth}. 
 
-Last but not least, as in all hyperbolic equations, the Courant-Friedrichs-Lewy (CFL) condition must be satisfied. This condition states that the time step $\Delta t$ must be chosen such that the real solution propagates at most at the same speed as the numerical solution. Thus, since we are using an explicit scheme we must impose a CFL of
-
-$$|u|_{\text{max}} \frac{\Delta t}{\Delta x} +|v|_{\text{max}} \frac{\Delta t}{\Delta y}\leq 1$$
 
 \subsubsection*{Diffusion term}
 As a second step we add diffusion using a second order central differences. The diffusion term is given by:
@@ -192,3 +189,10 @@ As a final step, we compute the gradient of the pressure field and update the ve
   \frac{p_{i+1,j}^{n} - p_{i,j}^{n}}{\Delta x}, \frac{p_{i,j+1}^{n} - p_{i,j}^{n}}{\Delta y}
   \right)
 \end{equation*}
+
+\subsection{Adaptive time step}
+The advantage of a semi-Lagrangian method for the advection term is that it is unconditionally stable, which allows for larger time steps without the risk of computational instability commonly encountered in other numerical schemes. However, one of the primary limitations associated with the semi-Lagrangian method is its poor conservation of physical quantities such as mass and momentum.This is found to be mostly caused by numerical errors associated with interpolation schemes as stated in \cite{MortezazadehWang2019}. To leverage the full potential of the Semi-Lagrangian time scheme, we refer the interested reader to extend studies as in \cite{Bakhtiari2017} or in \cite{MortezazadehWang2019}, but in this approach we choose the time step $\Delta t$ similar to a Courant-Friedrichs-Lewy (CFL) condition. 
+
+$$|u|_{\text{max}} \frac{\Delta t}{\Delta x} +|v|_{\text{max}} \frac{\Delta t}{\Delta y}\leq 1$$
+
+Although this way we are not using the full potential of the semi-Langrangian, we achieve an adaptive time step and assure the the physical correctness.
