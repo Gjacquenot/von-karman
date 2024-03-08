@@ -1,0 +1,102 @@
+%%%%%####################################################################
+% Packages 
+%%%%%####################################################################
+\documentclass[10pt,compress,xcolor=table]{beamer}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{csquotes}
+\usepackage[T1]{fontenc}
+\usepackage{datetime}
+
+% Biblatex
+\usepackage{csquotes} % needed for biblatex.
+\usepackage{stmaryrd} % for the url symbol in references.
+\usepackage[backend=biber, style=authoryear, citestyle=authoryear]{biblatex}
+\bibliography{library.bib}
+\renewcommand*{\bibfont}{\footnotesize}
+\newcommand\enllas{\raise.5pt\hbox{$\boxempty\kern-4.85pt{}^{\nearrow}$}\kern-2pt}
+
+\DeclareFieldFormat{url}{%
+  \mkbibacro{URL}\addcolon\space%
+  \ifhyperref%
+  {\href{#1}{\enllas}}%
+  {\url{#1}}}
+
+
+
+\usepackage{math}
+\usetikzlibrary{positioning}
+
+% Possible options of the package (add/remove below in \usetheme call):
+%  - nosectionpages: no pages between sections
+%  - flama: use flama font, requires xelatex/lualatex + the font to compile
+%  - compressminiframes: put the heading list bullets indications pages on 1 line
+\usetheme[compressminiframes]{sorbonne}
+
+% Title page
+\title{Von Kármán vortex streets}
+
+%\subtitle{Numerical methods for deterministic and stochastic problems} % optional subtitle
+\foottitle{Numerical simulation of von Kármán vortex streets} % optional, printed at the bottom of the slides, by default same as title, can be useful to rewrite when title has a newline for example
+\date{\formatdate{08}{03}{2024}}
+% Exam Presentation for Out of Equilibrium Systems
+\author{V. BALLESTER and J. NÄGERL}
+% \institute{LIP6 - Sorbonne Université} % Optional
+
+
+%%%%####################################################################
+%% OWN STUFF
+%%%%####################################################################
+\usepackage{wasysym} %For clashing sword symbol
+\usepackage{textcomp}
+
+%%%%####################################################################
+%% BEGIN OF SLIDES
+%%%%####################################################################
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+  \setcounter{framenumber}{0}
+\end{frame}
+
+%#####################################################################################################################################
+\section{Introduction}
+\input{1_Introduction}
+
+%#####################################################################################################################################
+\section{Methods}
+\input{2_methods}
+
+%#####################################################################################################################################
+\section{Numerical Results}
+\input{3_results}
+
+%#####################################################################################################################################
+\section{Conclusion}
+\input{4_Conclusion}
+
+%#####################################################################################################################################
+
+
+
+\section{References} \subsection{}
+
+\begin{frame}[allowframebreaks]{References}
+
+  \printbibliography[heading=none]
+
+\end{frame}
+
+\begin{frame}
+  \begin{center}
+    \Large Thank you for your attention!
+  \end{center}
+\end{frame}
+
+
+\end{document}
+
