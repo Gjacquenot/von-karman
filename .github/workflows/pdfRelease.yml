@@ -1,0 +1,38 @@
+name: Release PDF
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update_pdf:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v2
+      - name: Delete
+        uses: dev-drprasad/delete-older-releases@v0.2.0
+        with:
+          keep_latest: 1
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+          draft: false
+          prerelease: false
+
+      - name: Upload asset to release
+        uses: csexton/release-asset-action@v2
+        with:
+          release-url: ${{ steps.create_release.outputs.upload_url }}
+          files: latex/report/main.pdf
+          github-token: ${{ secrets.GITHUB_TOKEN }}
