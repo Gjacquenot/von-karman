@@ -18,6 +18,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libeigen3-dev libhdf5-dev cmake g++
+        sudo apt-get install -y python3 python3-numpy python3-h5py python3-matplotlib
 
     - name: Create build directory
       run: mkdir -p build
