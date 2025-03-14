@@ -24,7 +24,7 @@ using namespace std;
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
 // @param sign sign of the direction of the velocity fields (to be easily inverted). If unsure, use 1.
 // @param obstacle object representing the obstacle in the domain
-void Semilag(double* u, double* v, double* q, Prm prm, int sign, Object& obstacle);
+void Semilag(double* u, double* v, double* q, const Prm& prm, int sign, Object& obstacle);
 
 // @brief 2nd order semi-Lagrangian for advection
 // @param u velocity in x direction
@@ -33,20 +33,20 @@ void Semilag(double* u, double* v, double* q, Prm prm, int sign, Object& obstacl
 // @param q1 final scalar field to be advected
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
 // @param obstacle object representing the obstacle in the domain
-void Semilag2(double* u, double* v, double* q0, double* q1, Prm prm, Object& obstacle);
+void Semilag2(double* u, double* v, double* q0, double* q1, const Prm& prm, Object& obstacle);
 
 // @brief Set the boundary conditions for the velocity fields, but on the ghost points (i.e. fictitious points outside the domain) by linear interpolation
 // @param u velocity in x direction
 // @param v velocity in y direction
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
 // @param obstacle object representing the obstacle in the domain
-void BC_velocity(double* u, double* v, Prm prm);
+void BC_velocity(double* u, double* v, const Prm& prm);
 
 // @brief Set the boundary conditions for the pressure field, but on the ghost points (i.e. fictitious points outside the domain) by linear interpolation
 // @param p pressure
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
 // @param obstacle object representing the obstacle in the domain
-void BC_pressure(double* p, Prm prm);
+void BC_pressure(double* p, const Prm& prm);
 
 // @brief Interpolate the field phi at a given point of the grid (i, j) based on the values of the field at the surrounding points. In practice it is used on the points just outside the obstacle to decrease the gradient of the field between the fluid and the obstacle
 // @param i x index of the point
@@ -55,18 +55,18 @@ void BC_pressure(double* p, Prm prm);
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
 // @param obstacle object representing the obstacle in the domain
 // @return the interpolated value of the field at the point (i, j)
-double interpolate(int i, int j, double* phi, Prm prm, Object& obstacle);
+double interpolate(int i, int j, double* phi, const Prm& prm, Object& obstacle);
 
 // @brief Set the vorticity field based on the velocity fields
 // @param u velocity in x direction
 // @param v velocity in y direction
 // @param w vorticity
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
-void set_vorticity(double* u, double* v, double* w, Prm prm);
+void set_vorticity(double* u, double* v, double* w, const Prm& prm);
 
 // @brief Build the Poisson matrix for the pressure Poisson equation poisson(p) = div(u)
 // @param coeffs vector of triplets to store the coefficients of the Possion matrix. Triplets consist of (i, j, value), where i and j are the indices of the matrix and value is the value of the coefficient
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
-void buildPoissonMatrix(vector<Trip>& coeffs, Prm prm);
+void buildPoissonMatrix(vector<Trip>& coeffs, const Prm& prm);
 
 #endif  // NS_HPP

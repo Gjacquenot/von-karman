@@ -19,11 +19,11 @@ using namespace std;
 // @param time time to be printed
 void print(string str, int64_t time) {
   // default time is in microseconds
-  string microsec = "\u03BCs";
-  string millisec = "ms";
-  string sec = "s";
-  string min = "min";
-  string hour = "h";
+  const string microsec = "\u03BCs";
+  const string millisec = "ms";
+  const string sec = "s";
+  const string min = "min";
+  const string hour = "h";
   double time_d;
   if (time > 10000) {
     time /= 1000;  // now time is in milliseconds
@@ -55,7 +55,7 @@ void print(string str, int64_t time) {
 // @param object_type type of the object
 // @param vorticity_on boolean to check whether we want to plot the vorticity on the animation by default or not
 // @param animation_on boolean to check whether we want to plot the animation or not
-void saveSetupToHDF5(Prm prm, string object_type, bool vorticity_on, bool animation_on) {
+void saveSetupToHDF5(const Prm& prm, const string& object_type, bool vorticity_on, bool animation_on) {
   string filename = "output/setup.h5";
   const H5std_string DATASET_NAMES[] = {"Re", "NX", "NY", "LX", "LY",
                                         "L",
@@ -97,7 +97,7 @@ void saveSetupToHDF5(Prm prm, string object_type, bool vorticity_on, bool animat
 // @param plot_count index of the plot
 // @param u velocity in the x direction
 // @param v velocity in the y direction
-// @param w voriticity
+// @param w vorticity
 // @param p pressure
 // @param Nx number of cells in the x direction (including ghost cells)
 // @param Ny number of cells in the y direction (including ghost cells)

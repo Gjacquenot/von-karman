@@ -38,7 +38,7 @@ class Object {
 
   // @brief Initialize the object
   // @param prm parameters of the simulation (dx, dy, dt, etc.)
-  void init(Prm prm) {
+  void init(const Prm& prm) {
     IsInside = new bool[prm.NX * prm.NY];
     IsGhost = new bool[prm.NX * prm.NY];
     IsInterface = new bool[prm.NX * prm.NY];
@@ -105,7 +105,7 @@ class Object {
   // @param j y index of the point
   // @param prm parameters of the simulation (dx, dy, dt, etc.)
   // @return true if the point is inside the object, false otherwise
-  virtual bool is_inside(int i, int j, Prm prm) = 0;
+  virtual bool is_inside(int i, int j, const Prm& prm) = 0;
 
   // @brief Find the closest point on the boundary of the object to a given point (x, y)
   // @param x x coordinate of the point
@@ -156,7 +156,7 @@ class Object {
   // @param mirror the mirror point of the ghost point
   // @param count index of the ghost point in the GhostPoints array
   // @param prm parameters of the simulation (dx, dy, dt, etc.)
-  void set_interpolating_points(int i, int j, Point mirror, int count, Prm prm) {
+  void set_interpolating_points(int i, int j, const Point& mirror, int count, const Prm& prm) {
     // based on algorithm of the paper: High order ghost-cell immersed boundary method for generalized boundary conditions (by Mehrdad Yousefzadeh, Ilenia Battiato), p. 589-590
 
     // find I, J such that x(I) < mirror.x < x(I+1) and y(J) < mirror.y < y(J+1)
@@ -227,10 +227,10 @@ class Object {
 class Circle : public Object {
  public:
   double x0, y0, R;
-  Circle(double x0_, double y0_, double R_, Prm prm) : x0(x0_), y0(y0_), R(R_) {
+  Circle(double x0_, double y0_, double R_, const Prm& prm) : x0(x0_), y0(y0_), R(R_) {
     init(prm);
   }
-  bool is_inside(int i, int j, Prm prm) override {
+  bool is_inside(int i, int j, const Prm& prm) override {
     return (x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0) < R * R;
   }
 
@@ -243,10 +243,10 @@ class Circle : public Object {
 class Circle_Fin : public Object {
  public:
   double x0, y0, R, Lx, Ly;
-  Circle_Fin(double x0_, double y0_, double R_, double Lx_, double Ly_, Prm prm) : x0(x0_), y0(y0_), R(R_), Lx(Lx_), Ly(Ly_) {
+  Circle_Fin(double x0_, double y0_, double R_, double Lx_, double Ly_, const Prm& prm) : x0(x0_), y0(y0_), R(R_), Lx(Lx_), Ly(Ly_) {
     init(prm);
   }
-  bool is_inside(int i, int j, Prm prm) override {
+  bool is_inside(int i, int j, const Prm& prm) override {
     bool inside_circle = (x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0) < R * R;
     double rect_x0 = x0 + R + Lx / 2;
     double rect_y0 = y0;
@@ -263,11 +263,11 @@ class Circle_Fin : public Object {
 class Rectangle : public Object {
  public:
   double x0, y0, Lx, Ly;
-  Rectangle(double x0_, double y0_, double Lx_, double Ly_, Prm prm) : x0(x0_), y0(y0_), Lx(Lx_), Ly(Ly_) {
+  Rectangle(double x0_, double y0_, double Lx_, double Ly_, const Prm& prm) : x0(x0_), y0(y0_), Lx(Lx_), Ly(Ly_) {
     init(prm);
   }
 
-  bool is_inside(int i, int j, Prm prm) override {
+  bool is_inside(int i, int j, const Prm& prm) override {
     return (x(i) - x0) * (x(i) - x0) < Lx * Lx / 4 && (y(j) - y0) * (y(j) - y0) < Ly * Ly / 4;
   }
 
@@ -296,12 +296,12 @@ class Airfoil : public Object {
   double a, b, c, d, e, lambda, x0, y0;
   double dx;
   const double length = 1.0;
-  Airfoil(double a_, double b_, double c_, double d_, double e_, double lambda_, double x0_, double y0_, Prm prm) : a(a_), b(b_), c(c_), d(d_), e(e_), lambda(lambda_), x0(x0_), y0(y0_) {
+  Airfoil(double a_, double b_, double c_, double d_, double e_, double lambda_, double x0_, double y0_, const Prm& prm) : a(a_), b(b_), c(c_), d(d_), e(e_), lambda(lambda_), x0(x0_), y0(y0_) {
     this->dx = prm.dx;
     init(prm);
   }
 
-  bool is_inside(int i, int j, Prm prm) override {
+  bool is_inside(int i, int j, const Prm& prm) override {
     if (x(i) < x0 || x(i) > x0 + length) {
       return false;
     }
