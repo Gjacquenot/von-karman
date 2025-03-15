@@ -1,10 +1,9 @@
 import numpy as np
 from matplotlib import colormaps as cm
 from matplotlib.colors import ListedColormap
-import os
-from read_data import read_data_object
 from matplotlib.patches import Circle, Rectangle
-from defaults import *
+from defaults import color_object, cols_removed_beginning, cols_removed_end
+from read_data import read_data_object
 
 
 def get_color(w_on):
