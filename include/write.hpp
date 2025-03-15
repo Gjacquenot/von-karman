@@ -17,7 +17,7 @@ using namespace std;
 // @brief Print a string and a time in a human-readable format (in the form: "string xx.xx units")
 // @param str string to be printed
 // @param time time to be printed
-void print(string str, int64_t time) {
+void print(const string& str, int64_t time) {
   // default time is in microseconds
   const string microsec = "\u03BCs";
   const string millisec = "ms";
