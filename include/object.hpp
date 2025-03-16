@@ -11,34 +11,42 @@ using namespace std;
 
 // @brief Structure representing a point in the domain
 typedef struct point {
-  double x;  // x coordinate of the point
-  double y;  // y coordinate of the point
+  double x; // x coordinate of the point
+  double y; // y coordinate of the point
 } Point;
 
-// @brief Structure representing a point in the domain (with integer coordinates -> grid number)
+// @brief Structure representing a point in the domain (with integer coordinates
+// -> grid number)
 typedef struct grid {
-  int i;  // x index of the point
-  int j;  // y index of the point
+  int i; // x index of the point
+  int j; // y index of the point
 } Grid;
 
 #define TOL 1e-8
 
 class Object {
- public:
-  bool* IsInside;         // 1 if the point is inside the object, 0 otherwise.
-  bool* IsGhost;          // 1 if the point is a ghost point, 0 otherwise.
-  bool* IsInterface;      // 1 if the point is on the interface (fluid point and just next to a ghost point), 0 otherwise. These are the points where the forcing term is applied.
-  Grid* GhostPoints;      // Array of points that are just inside the object.
-  Point* BoundaryPoints;  // Array of points that are on the boundary of the object.
-  Point* MirrorPoints;    // Array of points that are mirrored by the object from the ghost points.
+public:
+  bool *IsInside;    // 1 if the point is inside the object, 0 otherwise.
+  bool *IsGhost;     // 1 if the point is a ghost point, 0 otherwise.
+  bool *IsInterface; // 1 if the point is on the interface (fluid point and just
+                     // next to a ghost point), 0 otherwise. These are the
+                     // points where the forcing term is applied.
+  Grid *GhostPoints; // Array of points that are just inside the object.
+  Point *
+      BoundaryPoints; // Array of points that are on the boundary of the object.
+  Point *MirrorPoints; // Array of points that are mirrored by the object from
+                       // the ghost points.
   // create a matrix of 6 interpolating points for each ghost point
-  Grid* InterpolatingPoints;  // Array of points that are used to interpolate any quantity (velocity u, velocity v or pressure) at the mirror points.
-  int count_ghost;            // Number of ghost points
-  string data;                // Data of the object (used to write the main characteristics of the object to a file)
+  Grid *InterpolatingPoints; // Array of points that are used to interpolate any
+                             // quantity (velocity u, velocity v or pressure) at
+                             // the mirror points.
+  int count_ghost;           // Number of ghost points
+  string data; // Data of the object (used to write the main characteristics of
+               // the object to a file)
 
   // @brief Initialize the object
   // @param prm parameters of the simulation (dx, dy, dt, etc.)
-  void init(const Prm& prm) {
+  void init(const Prm &prm) {
     IsInside = new bool[prm.NX * prm.NY];
     IsGhost = new bool[prm.NX * prm.NY];
     IsInterface = new bool[prm.NX * prm.NY];
@@ -50,7 +58,9 @@ class Object {
         IsInside[i * prm.NY + j] = is_inside(i, j, prm);
 
         // set the IsGhost array
-        if (IsInside[i * prm.NY + j] && (!is_inside(i - 1, j, prm) || !is_inside(i + 1, j, prm) || !is_inside(i, j - 1, prm) || !is_inside(i, j + 1, prm))) {
+        if (IsInside[i * prm.NY + j] &&
+            (!is_inside(i - 1, j, prm) || !is_inside(i + 1, j, prm) ||
+             !is_inside(i, j - 1, prm) || !is_inside(i, j + 1, prm))) {
           IsGhost[i * prm.NY + j] = true;
           count_gh++;
         } else {
@@ -80,7 +90,8 @@ class Object {
       for (int j = 0; j < prm.NY; j++) {
         IsInterface[i * prm.NY + j] = false;
         if (!IsInside[i * prm.NY + j]) {
-          if (is_inside(i - 1, j, prm) || is_inside(i + 1, j, prm) || is_inside(i, j - 1, prm) || is_inside(i, j + 1, prm)) {
+          if (is_inside(i - 1, j, prm) || is_inside(i + 1, j, prm) ||
+              is_inside(i, j - 1, prm) || is_inside(i, j + 1, prm)) {
             IsInterface[i * prm.NY + j] = true;
           }
         }
@@ -105,15 +116,17 @@ class Object {
   // @param j y index of the point
   // @param prm parameters of the simulation (dx, dy, dt, etc.)
   // @return true if the point is inside the object, false otherwise
-  virtual bool is_inside(int i, int j, const Prm& prm) = 0;
+  virtual bool is_inside(int i, int j, const Prm &prm) = 0;
 
-  // @brief Find the closest point on the boundary of the object to a given point (x, y)
+  // @brief Find the closest point on the boundary of the object to a given
+  // point (x, y)
   // @param x x coordinate of the point
   // @param y y coordinate of the point
   // @return the closest point on the boundary of the object to the given point
   virtual Point closest_boundary_point(double x, double y) = 0;
 
-  // @brief Find the mirror point of a given point (x, y) with respect to the object
+  // @brief Find the mirror point of a given point (x, y) with respect to the
+  // object
   // @param x x coordinate of the point
   // @param y y coordinate of the point
   // @return the mirror point of the given point with respect to the object
@@ -122,7 +135,8 @@ class Object {
     return {2 * p.x - x, 2 * p.y - y};
   }
 
-  // @brief Find the sign of the difference between x and the x coordinate of the mirror point
+  // @brief Find the sign of the difference between x and the x coordinate of
+  // the mirror point
   // @param x x coordinate of the point
   // @param mirror_x x coordinate of the mirror point
   // @return 1 if mirror_x - x > 0, -1 if mirror_x - x < 0, 0 otherwise
@@ -136,7 +150,8 @@ class Object {
     }
   }
 
-  // @brief Find the sign of the difference between y and the y coordinate of the mirror point
+  // @brief Find the sign of the difference between y and the y coordinate of
+  // the mirror point
   // @param y y coordinate of the point
   // @param mirror_y y coordinate of the mirror point
   // @return 1 if mirror_y - y > 0, -1 if mirror_y - y < 0, 0 otherwise
@@ -156,13 +171,20 @@ class Object {
   // @param mirror the mirror point of the ghost point
   // @param count index of the ghost point in the GhostPoints array
   // @param prm parameters of the simulation (dx, dy, dt, etc.)
-  void set_interpolating_points(int i, int j, const Point& mirror, int count, const Prm& prm) {
-    // based on algorithm of the paper: High order ghost-cell immersed boundary method for generalized boundary conditions (by Mehrdad Yousefzadeh, Ilenia Battiato), p. 589-590
+  void set_interpolating_points(int i, int j, const Point &mirror, int count,
+                                const Prm &prm) {
+    // based on algorithm of the paper: High order ghost-cell immersed boundary
+    // method for generalized boundary conditions (by Mehrdad Yousefzadeh,
+    // Ilenia Battiato), p. 589-590
 
     // find I, J such that x(I) < mirror.x < x(I+1) and y(J) < mirror.y < y(J+1)
-    int I = i - 2, J = j - 2;  // minimum value for I and J (the maximum value is I+2 and J+2)
-    while (x(I + 1) < mirror.x + TOL) I++;
-    while (y(J + 1) < mirror.y + TOL) J++;
+    int I = i - 2,
+        J = j -
+            2; // minimum value for I and J (the maximum value is I+2 and J+2)
+    while (x(I + 1) < mirror.x + TOL)
+      I++;
+    while (y(J + 1) < mirror.y + TOL)
+      J++;
 
     int x1, x2, x3, x4, x5, x6_1, x6_2, x6;
     int y1, y2, y3, y4, y5, y6_1, y6_2, y6;
@@ -175,7 +197,7 @@ class Object {
       x5 = I + 1;
       x6_1 = I + 1;
       x6_2 = I + 2;
-    } else {  // sgn_nx <= 0
+    } else { // sgn_nx <= 0
       I++;
       x1 = I - 1;
       x2 = I - 2;
@@ -204,8 +226,10 @@ class Object {
     y2 = J;
 
     // choose from x6_1 and x6_2
-    d_1 = (x(x6_1) - mirror.x) * (x(x6_1) - mirror.x) + (y(y6_1) - mirror.y) * (y(y6_1) - mirror.y);
-    d_2 = (x(x6_2) - mirror.x) * (x(x6_2) - mirror.x) + (y(y6_2) - mirror.y) * (y(y6_2) - mirror.y);
+    d_1 = (x(x6_1) - mirror.x) * (x(x6_1) - mirror.x) +
+          (y(y6_1) - mirror.y) * (y(y6_1) - mirror.y);
+    d_2 = (x(x6_2) - mirror.x) * (x(x6_2) - mirror.x) +
+          (y(y6_2) - mirror.y) * (y(y6_2) - mirror.y);
 
     if (d_1 < d_2) {
       x6 = x6_1;
@@ -225,12 +249,13 @@ class Object {
 };
 
 class Circle : public Object {
- public:
+public:
   double x0, y0, R;
-  Circle(double x0_, double y0_, double R_, const Prm& prm) : x0(x0_), y0(y0_), R(R_) {
+  Circle(double x0_, double y0_, double R_, const Prm &prm)
+      : x0(x0_), y0(y0_), R(R_) {
     init(prm);
   }
-  bool is_inside(int i, int j, const Prm& prm) override {
+  bool is_inside(int i, int j, const Prm &prm) override {
     return (x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0) < R * R;
   }
 
@@ -241,16 +266,20 @@ class Circle : public Object {
 };
 
 class Circle_Fin : public Object {
- public:
+public:
   double x0, y0, R, Lx, Ly;
-  Circle_Fin(double x0_, double y0_, double R_, double Lx_, double Ly_, const Prm& prm) : x0(x0_), y0(y0_), R(R_), Lx(Lx_), Ly(Ly_) {
+  Circle_Fin(double x0_, double y0_, double R_, double Lx_, double Ly_,
+             const Prm &prm)
+      : x0(x0_), y0(y0_), R(R_), Lx(Lx_), Ly(Ly_) {
     init(prm);
   }
-  bool is_inside(int i, int j, const Prm& prm) override {
-    bool inside_circle = (x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0) < R * R;
+  bool is_inside(int i, int j, const Prm &prm) override {
+    bool inside_circle =
+        (x(i) - x0) * (x(i) - x0) + (y(j) - y0) * (y(j) - y0) < R * R;
     double rect_x0 = x0 + R + Lx / 2;
     double rect_y0 = y0;
-    bool inside_rect = (x(i) > rect_x0 - Lx / 2) && (x(i) < rect_x0 + Lx / 2) && (y(j) > rect_y0 - Ly / 2) && (y(j) < rect_y0 + Ly / 2);
+    bool inside_rect = (x(i) > rect_x0 - Lx / 2) && (x(i) < rect_x0 + Lx / 2) &&
+                       (y(j) > rect_y0 - Ly / 2) && (y(j) < rect_y0 + Ly / 2);
     return inside_circle || inside_rect;
   }
 
@@ -261,14 +290,16 @@ class Circle_Fin : public Object {
 };
 
 class Rectangle : public Object {
- public:
+public:
   double x0, y0, Lx, Ly;
-  Rectangle(double x0_, double y0_, double Lx_, double Ly_, const Prm& prm) : x0(x0_), y0(y0_), Lx(Lx_), Ly(Ly_) {
+  Rectangle(double x0_, double y0_, double Lx_, double Ly_, const Prm &prm)
+      : x0(x0_), y0(y0_), Lx(Lx_), Ly(Ly_) {
     init(prm);
   }
 
-  bool is_inside(int i, int j, const Prm& prm) override {
-    return (x(i) - x0) * (x(i) - x0) < Lx * Lx / 4 && (y(j) - y0) * (y(j) - y0) < Ly * Ly / 4;
+  bool is_inside(int i, int j, const Prm &prm) override {
+    return (x(i) - x0) * (x(i) - x0) < Lx * Lx / 4 &&
+           (y(j) - y0) * (y(j) - y0) < Ly * Ly / 4;
   }
 
   Point closest_boundary_point(double x, double y) override {
@@ -287,21 +318,22 @@ class Rectangle : public Object {
 };
 
 class Airfoil : public Object {
-  // f(x) = a * sqrt(x - x0) + b * (x - x0) + c * (x - x0)^2 + d * (x - x0)^3 + e * (x - x0)^4
-  // equation for the upper part of the airfoil:
-  // y(x) = y0 + f(x)
+  // f(x) = a * sqrt(x - x0) + b * (x - x0) + c * (x - x0)^2 + d * (x - x0)^3 +
+  // e * (x - x0)^4 equation for the upper part of the airfoil: y(x) = y0 + f(x)
   // equation for the lower part of the airfoil:
   // f(x) = y0 - lambda * f(x)
- public:
+public:
   double a, b, c, d, e, lambda, x0, y0;
   double dx;
   const double length = 1.0;
-  Airfoil(double a_, double b_, double c_, double d_, double e_, double lambda_, double x0_, double y0_, const Prm& prm) : a(a_), b(b_), c(c_), d(d_), e(e_), lambda(lambda_), x0(x0_), y0(y0_) {
+  Airfoil(double a_, double b_, double c_, double d_, double e_, double lambda_,
+          double x0_, double y0_, const Prm &prm)
+      : a(a_), b(b_), c(c_), d(d_), e(e_), lambda(lambda_), x0(x0_), y0(y0_) {
     this->dx = prm.dx;
     init(prm);
   }
 
-  bool is_inside(int i, int j, const Prm& prm) override {
+  bool is_inside(int i, int j, const Prm &prm) override {
     if (x(i) < x0 || x(i) > x0 + length) {
       return false;
     }
@@ -313,12 +345,17 @@ class Airfoil : public Object {
 
   // equation for the upper part of the airfoil.
   double f_top(double x) {
-    return y0 + a * sqrt(x - x0) + b * (x - x0) + c * (x - x0) * (x - x0) + d * (x - x0) * (x - x0) * (x - x0) + e * (x - x0) * (x - x0) * (x - x0) * (x - x0);
+    return y0 + a * sqrt(x - x0) + b * (x - x0) + c * (x - x0) * (x - x0) +
+           d * (x - x0) * (x - x0) * (x - x0) +
+           e * (x - x0) * (x - x0) * (x - x0) * (x - x0);
   }
 
   // equation for the lower part of the airfoil.
   double f_bottom(double x) {
-    return y0 - lambda * (a * sqrt(x - x0) + b * (x - x0) + c * (x - x0) * (x - x0) + d * (x - x0) * (x - x0) * (x - x0) + e * (x - x0) * (x - x0) * (x - x0) * (x - x0));
+    return y0 -
+           lambda * (a * sqrt(x - x0) + b * (x - x0) + c * (x - x0) * (x - x0) +
+                     d * (x - x0) * (x - x0) * (x - x0) +
+                     e * (x - x0) * (x - x0) * (x - x0) * (x - x0));
   }
 
   Point closest_boundary_point(double x, double y) override {
@@ -326,7 +363,7 @@ class Airfoil : public Object {
     // horizontal distance to the boundary
     double X11 = x, X12, Y1 = y, yaux1, yaux2;
     yaux1 = (y > y0) ? f_top(x) : f_bottom(x);
-    double dx_small = dx / 10;  // only valid for points near boundary
+    double dx_small = dx / 10; // only valid for points near boundary
     // get the closest X1 to the airfoil in the level y = Y1
     int sign = (x > x0 + length / 2) ? 1 : -1;
     for (int i = 0; i <= 10; i++) {
@@ -351,4 +388,4 @@ class Airfoil : public Object {
   }
 };
 
-#endif  // OBJECT_HPP
+#endif // OBJECT_HPP
