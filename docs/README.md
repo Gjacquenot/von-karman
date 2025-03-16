@@ -1,6 +1,6 @@
 # Numerical simulation of the Von Kármán vortex street
 
-This project is dedicated to the numerical simulation of the Kármán vortex street in two dimensions, utilizing finite difference, the Chorin method and a Semi-Lagrangian solver. Users can explore various boundary conditions, initial conditions, and visualize the evolution and final states of simulations. The
+This project is dedicated to the numerical simulation of the Kármán vortex street in two dimensions, utilizing finite difference, the Chorin method and a Semi-Lagrangian solver. Users can explore various boundary conditions, initial conditions, and visualize the evolution and final states of simulations. 
 
 ## Description
 
