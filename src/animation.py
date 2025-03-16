@@ -3,8 +3,24 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 import sys
 import time
-from defaults import colorbar_args, duration, y_pos_text, y_pos_title, FONTSIZE_TIME, X_LABEL, Y_LABEL
-from plot_functions import get_color, get_plot_args, get_obstacle, set_axis, set_datablocks, set_nx_ny, set_Z_max_min
+from defaults import (
+    colorbar_args,
+    duration,
+    y_pos_text,
+    y_pos_title,
+    FONTSIZE_TIME,
+    X_LABEL,
+    Y_LABEL,
+)
+from plot_functions import (
+    get_color,
+    get_plot_args,
+    get_obstacle,
+    set_axis,
+    set_datablocks,
+    set_nx_ny,
+    set_Z_max_min,
+)
 from read_data import get_num_frames, set_data, readSetupFromHDF5
 
 
@@ -17,16 +33,13 @@ def animate(folder_path: str, folder_object, obstacle, save: bool = False):
 
     # set data
     times, data_blocks_u, data_blocks_v, data_blocks_w, data_blocks_p = set_data(
-        folder_path)
+        folder_path
+    )
 
     FPS = int(num_frames / duration) + 1  # +1 to ensure positivity
     interval = 1000 / FPS  # interval between frames in milliseconds
 
-    data_blocks = set_datablocks(
-        w_on,
-        data_blocks_u,
-        data_blocks_v,
-        data_blocks_w)
+    data_blocks = set_datablocks(w_on, data_blocks_u, data_blocks_v, data_blocks_w)
 
     # Print some information
     print("Length of data: ", num_frames)
@@ -45,14 +58,18 @@ def animate(folder_path: str, folder_object, obstacle, save: bool = False):
 
     plot_args = get_plot_args(dx, LX, LY, Z_MIN, Z_MAX, color)
 
-    text_args = {'x': 0.5, 'y': y_pos_text, 's': '', 'transform': ax.transAxes,
-                 'fontsize': FONTSIZE_TIME, 'horizontalalignment': 'center'}
+    text_args = {
+        "x": 0.5,
+        "y": y_pos_text,
+        "s": "",
+        "transform": ax.transAxes,
+        "fontsize": FONTSIZE_TIME,
+        "horizontalalignment": "center",
+    }
     time_text = ax.text(**text_args)
 
     # set title (omega or sqrt(u^2 + v^2)
-    ax.set_title(
-        r'$\omega$' if w_on else r'$\sqrt{u^2 + v^2}$',
-        y=y_pos_title)
+    ax.set_title(r"$\omega$" if w_on else r"$\sqrt{u^2 + v^2}$", y=y_pos_title)
 
     # Axes
     ax.set_xlabel(X_LABEL)
@@ -82,7 +99,7 @@ def animate(folder_path: str, folder_object, obstacle, save: bool = False):
         Z = data_blocks[real_frame]
 
         # Update the time text
-        time_text.set_text('t = %.3f' % times[real_frame])
+        time_text.set_text("t = %.3f" % times[real_frame])
 
         # Update the plot
         plot[0] = ax.imshow(Z, **plot_args)
@@ -90,17 +107,21 @@ def animate(folder_path: str, folder_object, obstacle, save: bool = False):
         return plot[0], time_text
 
     # Create the animation
-    ani = FuncAnimation(fig, update, frames=num_frames,
-                        interval=interval, blit=False, init_func=init)
+    ani = FuncAnimation(
+        fig, update, frames=num_frames, interval=interval, blit=False, init_func=init
+    )
 
     end_time = time.time()
-    print("Total time for animating: ", int(
-        UNIT_TIME * (end_time - start_time)), LABEL_TIME)
+    print(
+        "Total time for animating: ",
+        int(UNIT_TIME * (end_time - start_time)),
+        LABEL_TIME,
+    )
 
     if save:
         # Save the animation
-        filename = 'data/videos/' + obstacle + '_Re=' + str(Re) + '.mp4'
-        ani.save(filename, writer='ffmpeg', dpi=300, fps=FPS)
+        filename = "data/videos/" + obstacle + "_Re=" + str(Re) + ".mp4"
+        ani.save(filename, writer="ffmpeg", dpi=300, fps=FPS)
     else:
         # Show the animation
         plt.show()
@@ -110,12 +131,13 @@ def animate(folder_path: str, folder_object, obstacle, save: bool = False):
 UNIT_TIME = 1000  # in seconds
 LABEL_TIME = "ms"
 start_time = time.time()
-folder_results = 'output/results/'
-folder_object = 'config/'
+folder_results = "output/results/"
+folder_object = "config/"
 
 # Read data
-Re, NX, NY, LX, LY, L, U, nu, dx, dy, dt, T, obstacle, w_on, animation_on = readSetupFromHDF5(
-    folder_results + '../setup.h5')
+Re, NX, NY, LX, LY, L, U, nu, dx, dy, dt, T, obstacle, w_on, animation_on = (
+    readSetupFromHDF5(folder_results + "../setup.h5")
+)
 
 if animation_on == False:
     print("Animation is off. Exiting...")

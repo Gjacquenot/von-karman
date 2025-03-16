@@ -20,25 +20,30 @@ using namespace Eigen;
 
 #define START_TIMER() begin = chrono::steady_clock::now()
 #define END_TIMER() end = chrono::steady_clock::now()
-#define ADD_TIME_TO(x) x += chrono::duration_cast<chrono::microseconds>(end - begin).count()
+#define ADD_TIME_TO(x)                                                         \
+  x += chrono::duration_cast<chrono::microseconds>(end - begin).count()
 
-#define WRITE_ANIM() ((t - EPS < (plot_count + 1) * plot_dt) && (t + prm.dt - EPS > (plot_count + 1) * plot_dt))
+#define WRITE_ANIM()                                                           \
+  ((t - EPS < (plot_count + 1) * plot_dt) &&                                   \
+   (t + prm.dt - EPS > (plot_count + 1) * plot_dt))
 
 int main(void) {
-  const string filename_input = "config/input.txt";  // name of the input file to read the parameters
-  const string space = "    ";                       // space to print
-  const uint per = 10;                               // progress percentage interval to print (each count%)
+  const string filename_input =
+      "config/input.txt";      // name of the input file to read the parameters
+  const string space = "    "; // space to print
+  const uint per = 10; // progress percentage interval to print (each count%)
   uint count = per;
   Prm prm;
-  bool animation;       // flag to enable or disable the animation
-  bool vorticity;       // flag to enable or disable plotting the vorticity
-  double plot_dt;       // frequency to write the animation file
-  uint plot_count = 0;  // counter to write the animation file
-  string object_type;   // type of object to simulate
+  bool animation;      // flag to enable or disable the animation
+  bool vorticity;      // flag to enable or disable plotting the vorticity
+  double plot_dt;      // frequency to write the animation file
+  uint plot_count = 0; // counter to write the animation file
+  string object_type;  // type of object to simulate
   int64_t total_files = 0, total_advection = 0, total_diffusion = 0,
           total_others = 0, total_build_poisson = 0, total_solve_laplace = 0,
-          total_constr_obstacle = 0, total_boundary = 0;  // variables to measure the time
-  chrono::steady_clock::time_point begin, end;            // variables to measure the time
+          total_constr_obstacle = 0,
+          total_boundary = 0;                  // variables to measure the time
+  chrono::steady_clock::time_point begin, end; // variables to measure the time
 
   // ------------- File input setup ----------------
   START_TIMER();
@@ -71,7 +76,7 @@ int main(void) {
 
   // ------------- Obstacle setup ----------------
   START_TIMER();
-  Object* obstacle;
+  Object *obstacle;
   file_input.open("config/" + object_type + ".txt");
   if (object_type == "circle") {
     double x0, y0, R;
@@ -116,7 +121,8 @@ int main(void) {
       file_input >> tmp >> y0;
     }
     obstacle = new Airfoil(a, b, c, d, e, lambda, x0, y0, prm);
-    prm.L = 0.06001727 * (1 + lambda);  // with default values (numerical computation)
+    prm.L = 0.06001727 *
+            (1 + lambda); // with default values (numerical computation)
   } else {
     cout << "Object type not recognized" << endl;
     return 1;
@@ -135,24 +141,27 @@ int main(void) {
   cout << "T:             " << space << prm.T << endl;
   cout << "Re:            " << space << prm.Re << endl;
   cout << "U:             " << space << prm.U << endl;
-  cout << "Obstacle?      " << space << (prm.obstacle_ON ? "yes, " + object_type : "no") << endl;
+  cout << "Obstacle?      " << space
+       << (prm.obstacle_ON ? "yes, " + object_type : "no") << endl;
   cout << "Vorticity?     " << space << (vorticity ? "yes" : "no") << endl;
   cout << "Plot animation?" << space << (animation ? "yes" : "no") << endl;
   // ------------------------------------------------
 
   double t = 0.0;
   uint numSteps = 0;
-  double fraction_completed = prm.T / 100.;  // fraction of the integration time to print
+  double fraction_completed =
+      prm.T / 100.; // fraction of the integration time to print
 
   // allocate memory
-  double* u = new double[prm.NXNY];      // x component of velocity
-  double* ustar = new double[prm.NXNY];  // x component of velocity
-  double* v = new double[prm.NXNY];      // y component of velocity
-  double* vstar = new double[prm.NXNY];  // y component of velocity
-  double* w = new double[prm.NXNY];      // vorticity (only 1 component, because it is 2D)
-  double* p = new double[prm.NXNY];      // pressure
-  double* adv_u = new double[prm.NXNY];  // advection term of u
-  double* adv_v = new double[prm.NXNY];  // advection term of v
+  double *u = new double[prm.NXNY];     // x component of velocity
+  double *ustar = new double[prm.NXNY]; // x component of velocity
+  double *v = new double[prm.NXNY];     // y component of velocity
+  double *vstar = new double[prm.NXNY]; // y component of velocity
+  double *w =
+      new double[prm.NXNY]; // vorticity (only 1 component, because it is 2D)
+  double *p = new double[prm.NXNY];     // pressure
+  double *adv_u = new double[prm.NXNY]; // advection term of u
+  double *adv_v = new double[prm.NXNY]; // advection term of v
   // initialize to 0
   for (int i = 0; i < prm.NXNY; i++) {
     u[i] = 0;
@@ -182,7 +191,9 @@ int main(void) {
   A.setFromTriplets(coeffs.begin(), coeffs.end());
 
   SimplicialLDLT<SpMat> chol;
-  chol.compute(A);  // performs a Cholesky factorization of A. The matrix has to be symmetric and positive definite for this to work as expected
+  chol.compute(
+      A); // performs a Cholesky factorization of A. The matrix has to be
+          // symmetric and positive definite for this to work as expected
   if (chol.info() != Success) {
     cout << "Cholesky decomposition failed" << endl;
     return 1;
@@ -207,7 +218,9 @@ int main(void) {
     }
     if (max_u_v > 1e-3) {
       // update CFL number
-      prm.dt = prm.dx * prm.dy / (2 * max_u_v * (prm.dx + prm.dy));  // the factor 2 is to be conservative
+      prm.dt = prm.dx * prm.dy /
+               (2 * max_u_v *
+                (prm.dx + prm.dy)); // the factor 2 is to be conservative
     }
 
     // ---------- advection term ------------
@@ -249,14 +262,21 @@ int main(void) {
 
     // ---------- pressure term ------------
     START_TIMER();
-    // compute the (minus) divergence of the velocity field (we omit multiplication by dt, because later on we will divide by dt) and store it in div
+    // compute the (minus) divergence of the velocity field (we omit
+    // multiplication by dt, because later on we will divide by dt) and store it
+    // in div
     for (int i = 1; i < prm.NX - 1; i++) {
       for (int j = 1; j < prm.NY - 1; j++) {
         if (prm.obstacle_ON) {
-          DIV(i - 1, j - 1) = obstacle->IsInside[i * prm.NY + j] ? 0 : -(Ustar(i + 1, j) - Ustar(i - 1, j)) / (2 * prm.dx) - (Vstar(i, j + 1) - Vstar(i, j - 1)) / (2 * prm.dy);
+          DIV(i - 1, j - 1) =
+              obstacle->IsInside[i * prm.NY + j]
+                  ? 0
+                  : -(Ustar(i + 1, j) - Ustar(i - 1, j)) / (2 * prm.dx) -
+                        (Vstar(i, j + 1) - Vstar(i, j - 1)) / (2 * prm.dy);
         } else {
-          DIV(i - 1, j - 1) = -(Ustar(i + 1, j) - Ustar(i - 1, j)) / (2 * prm.dx) -
-                              (Vstar(i, j + 1) - Vstar(i, j - 1)) / (2 * prm.dy);
+          DIV(i - 1, j - 1) =
+              -(Ustar(i + 1, j) - Ustar(i - 1, j)) / (2 * prm.dx) -
+              (Vstar(i, j + 1) - Vstar(i, j - 1)) / (2 * prm.dy);
         }
       }
     }
@@ -305,8 +325,10 @@ int main(void) {
     // ---------- printing to file ------------
     START_TIMER();
     if (WRITE_ANIM()) {
-      // we cannot change the value of u and v (in order not to produce divergence with the pressure at next step)
-      // linear interpolation on the outer discrete boundary of the object to smooth the boundary jump values.
+      // we cannot change the value of u and v (in order not to produce
+      // divergence with the pressure at next step) linear interpolation on the
+      // outer discrete boundary of the object to smooth the boundary jump
+      // values.
       memcpy(ustar, u, prm.NXNY * sizeof(double));
       memcpy(vstar, v, prm.NXNY * sizeof(double));
       for (int i = 1; i < prm.NX - 1; i++) {
@@ -341,15 +363,21 @@ int main(void) {
   }
 
   print("Total time for files:                   " + space, total_files);
-  print("Total time for construction of obstacle:" + space, total_constr_obstacle);
-  print("Total time for build laplace:           " + space, total_build_poisson);
+  print("Total time for construction of obstacle:" + space,
+        total_constr_obstacle);
+  print("Total time for build laplace:           " + space,
+        total_build_poisson);
   print("Total time for advection:               " + space, total_advection);
   print("Total time for diffusion:               " + space, total_diffusion);
-  print("Total time for solve laplace:           " + space, total_solve_laplace);
+  print("Total time for solve laplace:           " + space,
+        total_solve_laplace);
   print("Total time for boundary:                " + space, total_boundary);
   print("Total time for rest:                    " + space, total_others);
   printf("-----------------------------------------------------------\n");
-  print("Total time:                             " + space, total_files + total_advection + total_diffusion + total_others + total_build_poisson + total_solve_laplace + total_constr_obstacle + total_boundary);
+  print("Total time:                             " + space,
+        total_files + total_advection + total_diffusion + total_others +
+            total_build_poisson + total_solve_laplace + total_constr_obstacle +
+            total_boundary);
 
   // free memory
   delete[] u;

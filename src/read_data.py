@@ -55,8 +55,13 @@ from defaults import cols_removed_beginning, cols_removed_end
 
 
 def get_num_frames(folder_path: str) -> int:
-    num_frames = len([f for f in os.listdir(folder_path)
-                      if os.path.isfile(os.path.join(folder_path, f))])
+    num_frames = len(
+        [
+            f
+            for f in os.listdir(folder_path)
+            if os.path.isfile(os.path.join(folder_path, f))
+        ]
+    )
     return num_frames
 
 
@@ -69,7 +74,7 @@ def read_data_object(file_path: str):
     ...
     An xn
     """
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         lines = file.readlines()
 
     data = []
@@ -83,35 +88,35 @@ def read_data_object(file_path: str):
 
 
 def readSetupFromHDF5(hdf5_file: str):
-    with h5py.File(hdf5_file, 'r') as file:
+    with h5py.File(hdf5_file, "r") as file:
         # Accessing the first element and converting to scalar
-        Re = file['Re'][()].item()
-        NX = int(file['NX'][()].item())
-        NY = int(file['NY'][()].item())
-        LX = file['LX'][()].item()
-        LY = file['LY'][()].item()
-        L = file['L'][()].item()
-        U = file['U'][()].item()
-        nu = file['nu'][()].item()
-        dx = file['dx'][()].item()
-        dy = file['dy'][()].item()
-        dt = file['dt'][()].item()
-        T = file['T'][()].item()
-        obstacle = file['obstacle'][()].item().decode('utf-8')
-        w_on = bool(file['w_on'][()].item())
-        animation_on = bool(file['animation_on'][()].item())
+        Re = file["Re"][()].item()
+        NX = int(file["NX"][()].item())
+        NY = int(file["NY"][()].item())
+        LX = file["LX"][()].item()
+        LY = file["LY"][()].item()
+        L = file["L"][()].item()
+        U = file["U"][()].item()
+        nu = file["nu"][()].item()
+        dx = file["dx"][()].item()
+        dy = file["dy"][()].item()
+        dt = file["dt"][()].item()
+        T = file["T"][()].item()
+        obstacle = file["obstacle"][()].item().decode("utf-8")
+        w_on = bool(file["w_on"][()].item())
+        animation_on = bool(file["animation_on"][()].item())
     return Re, NX, NY, LX, LY, L, U, nu, dx, dy, dt, T, obstacle, w_on, animation_on
 
 
 def readSolutionFromHDF5(hdf5_file: str):
-    with h5py.File(hdf5_file, 'r') as file:
+    with h5py.File(hdf5_file, "r") as file:
         # NX = int(file['NX'][()].item())
         # NY = int(file['NY'][()].item())
-        u = file['u'][:]
-        v = file['v'][:]
-        w = file['w'][:]
-        p = file['p'][:]
-        t = file['t'][()].item()
+        u = file["u"][:]
+        v = file["v"][:]
+        w = file["w"][:]
+        p = file["p"][:]
+        t = file["t"][()].item()
     return t, u, v, w, p
 
 
@@ -124,7 +129,7 @@ def set_data(folder_path: str):
     data_blocks_w = []
     data_blocks_p = []
     for i in range(num_frames):
-        file_path = folder_path + 'sol_' + str(i) + '.h5'
+        file_path = folder_path + "sol_" + str(i) + ".h5"
         t, u, v, w, p = readSolutionFromHDF5(file_path)
         times.append(t)
         # remove ghost cells
@@ -139,25 +144,20 @@ def set_data(folder_path: str):
     data_blocks_w = np.array(data_blocks_w)
     data_blocks_p = np.array(data_blocks_p)
 
-    arrays_to_process = [
-        data_blocks_u,
-        data_blocks_v,
-        data_blocks_w,
-        data_blocks_p]
+    arrays_to_process = [data_blocks_u, data_blocks_v, data_blocks_w, data_blocks_p]
 
     # Iterate over each array and remove columns
     for i, data_array in enumerate(arrays_to_process):
-        arrays_to_process[i] = np.delete(data_array,
-                                         np.s_[:cols_removed_beginning],
-                                         axis=1)
-        arrays_to_process[i] = np.delete(arrays_to_process[i],
-                                         np.s_[-cols_removed_end:],
-                                         axis=1)
+        arrays_to_process[i] = np.delete(
+            data_array, np.s_[:cols_removed_beginning], axis=1
+        )
+        arrays_to_process[i] = np.delete(
+            arrays_to_process[i], np.s_[-cols_removed_end:], axis=1
+        )
 
         tmp = arrays_to_process[i].copy()
 
-        arrays_to_process[i] = np.zeros(
-            (len(tmp), tmp.shape[2], tmp.shape[1]))
+        arrays_to_process[i] = np.zeros((len(tmp), tmp.shape[2], tmp.shape[1]))
 
         # transpose the data and reverse
         for j, data in enumerate(tmp):

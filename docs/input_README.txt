@@ -9,5 +9,5 @@ nu                      Kinematic viscosity of the fluid. Positive real number.
 vorticity               Whether to plot the vorticity or not. Boolean: 1 (yes) or 0 (no).
 obstacle                Whether to include an obstacle in the domain or not. Boolean: 1 (yes) or 0 (no).
 object                  Type of obstacle. Default strings: "circle", "circle_fin", "rectangle" or "airfoil".
-plot_dt            Time step for the animation (print solution each animation_dt time-steps). Positive integer.
+plot_dt                 Time step for the animation (print solution each animation_dt time-steps). Positive integer.
 animation               Whether to animate the solution or not. Boolean: 1 (yes) or 0 (no).
