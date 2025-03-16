@@ -1,12 +1,11 @@
 import matplotlib.pyplot as plt
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-import numpy as np
 import sys
 import time
-from read_data import *
-from defaults import *
-from plot_functions import *
+from defaults import colorbar_args, duration, y_pos_text, y_pos_title, FONTSIZE_TIME, X_LABEL, Y_LABEL
+from plot_functions import get_color, get_plot_args, get_obstacle, set_axis, set_datablocks, set_nx_ny, set_Z_max_min
+from read_data import get_num_frames, set_data, readSetupFromHDF5
 
 
 def animate(folder_path: str, folder_object, obstacle, save: bool = False):
@@ -123,8 +122,5 @@ if animation_on == False:
     sys.exit()
 
 # if there is an argument, then save the animation
-if len(sys.argv) > 1:
-    save = True
-    animate(folder_results, folder_object, obstacle, save)
-else:
-    animate(folder_results, folder_object, obstacle)
+save = len(sys.argv) > 1
+animate(folder_results, folder_object, obstacle, save)

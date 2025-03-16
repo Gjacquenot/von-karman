@@ -1,8 +1,6 @@
 #ifndef MISC_HPP
 #define MISC_HPP
 
-#include <iostream>
-
 // auxiliary macros to access the fields
 #define U(i, j) u[(i) * prm.NY + (j)]
 #define V(i, j) v[(i) * prm.NY + (j)]

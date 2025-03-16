@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-void Semilag(double* u, double* v, double* q, Prm prm, int sign, Object& obstacle) {
+void Semilag(double* u, double* v, double* q, const Prm& prm, int sign, Object& obstacle) {
   int sign_u, sign_v;
   double a, b;
   double* aux = (double*)calloc(prm.NXNY, sizeof(double));
@@ -36,7 +36,7 @@ void Semilag(double* u, double* v, double* q, Prm prm, int sign, Object& obstacl
   free(aux);
 }
 
-void Semilag2(double* u, double* v, double* q0, double* q1, Prm prm, Object& obstacle) {
+void Semilag2(double* u, double* v, double* q0, double* q1, const Prm& prm, Object& obstacle) {
   memcpy(q1, q0, prm.NXNY * sizeof(double));
   Semilag(u, v, q1, prm, 1, obstacle);
   Semilag(u, v, q1, prm, -1, obstacle);
@@ -45,7 +45,7 @@ void Semilag2(double* u, double* v, double* q0, double* q1, Prm prm, Object& obs
   Semilag(u, v, q1, prm, 1, obstacle);
 }
 
-void BC_velocity(double* u, double* v, Prm prm) {
+void BC_velocity(double* u, double* v, const Prm& prm) {
   for (int i = 0; i < prm.NX; i++) {
     // bottom boundary: \partial_y u = 0, v = 0
     U(i, 0) = U(i, 1);
@@ -65,7 +65,7 @@ void BC_velocity(double* u, double* v, Prm prm) {
   }
 }
 
-void BC_pressure(double* p, Prm prm) {
+void BC_pressure(double* p, const Prm& prm) {
   for (int i = 0; i < prm.NX; i++) {
     // bottom boundary: \partial_y p = 0
     P(i, 0) = P(i, 1);
@@ -80,7 +80,7 @@ void BC_pressure(double* p, Prm prm) {
   }
 }
 
-double interpolate(int i, int j, double* phi, Prm prm, Object& obstacle) {
+double interpolate(int i, int j, double* phi, const Prm& prm, Object& obstacle) {
   // interpolate with the 8 surrounding points that are not forcing points (x is the point (i, j) and o are the surrounding points, some of them may be forcing points)
   // o o o
   // o x o
@@ -111,7 +111,7 @@ double interpolate(int i, int j, double* phi, Prm prm, Object& obstacle) {
   return interp / total_weight;
 }
 
-void set_vorticity(double* u, double* v, double* w, Prm prm) {
+void set_vorticity(double* u, double* v, double* w, const Prm& prm) {
   for (int i = 1; i < prm.NX - 1; i++) {
     for (int j = 1; j < prm.NY - 1; j++) {
       W(i, j) = (V(i + 1, j) - V(i - 1, j)) / (2 * prm.dx) - (U(i, j + 1) - U(i, j - 1)) / (2 * prm.dy);
@@ -119,8 +119,8 @@ void set_vorticity(double* u, double* v, double* w, Prm prm) {
   }
 }
 
-void buildPoissonMatrix(vector<Trip>& coeffs, Prm prm) {
-  // Remeber we are taking the following BC for the pressure:
+void buildPoissonMatrix(vector<Trip>& coeffs, const Prm& prm) {
+  // Remember we are taking the following BC for the pressure:
   // on the top, bottom and left boundaries, the normal derivative of the pressure is 0, i.e.:  P(i, NY - 1) = P(i, NY - 2)
   //                                                                                            P(i, 0) = P(i, 1);
   //                                                                                            P(0, j) = P(1, j);
@@ -219,7 +219,7 @@ void buildPoissonMatrix(vector<Trip>& coeffs, Prm prm) {
   // common (diag) -> nx * ny
   // total = dx + dy - common = 5 * nx * ny - 2 * ny - 2 * nx
 
-  // we will store the minus of the coefficients, because we will use the cholensky decomposition, which requires a positive definite matrix
+  // we will store the minus of the coefficients, because we will use the Cholesky decomposition, which requires a positive definite matrix
 
   coeffs.reserve((uint)(5 * prm.nx * prm.ny - 2 * (prm.ny + prm.nx)));
   int dim = prm.nx * prm.ny;
@@ -232,7 +232,7 @@ void buildPoissonMatrix(vector<Trip>& coeffs, Prm prm) {
     diagX = -2. * dx_2;
     diagY = -2. * dy_2;
     if (i % prm.ny == 0 || i % prm.ny == prm.ny - 1) diagY = -dy_2;
-    // for full neumann BC (test case, remebr that in this case the matrix is singular and the cholensky decomposition will fail, you have to change for example the component (0, 1) to 0, and, to make the matrix symmetric, the component (1, 0) to 0)
+    // for full neumann BC (test case, remember that in this case the matrix is singular and the Cholesky decomposition will fail, you have to change for example the component (0, 1) to 0, and, to make the matrix symmetric, the component (1, 0) to 0)
     // if (i < prm.ny || i >= dim - prm.ny) diagX = -dx_2;
     // for mixed dirichlet-neumann BC (our case)
     if (i < prm.ny) diagX = -dx_2;

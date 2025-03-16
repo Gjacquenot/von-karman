@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 import os
-from defaults import *
+from defaults import cols_removed_beginning, cols_removed_end
 
 # def read_data_file(file_path):
 #     """Read data from file. The file is of the form:
@@ -54,13 +54,13 @@ from defaults import *
 #     return headers_array, data_blocks_array
 
 
-def get_num_frames(folder_path):
+def get_num_frames(folder_path: str) -> int:
     num_frames = len([f for f in os.listdir(folder_path)
                       if os.path.isfile(os.path.join(folder_path, f))])
     return num_frames
 
 
-def read_data_object(file_path):
+def read_data_object(file_path: str):
     """
     Read data from file. The file is of the form:
 
@@ -82,7 +82,7 @@ def read_data_object(file_path):
     return data_array
 
 
-def readSetupFromHDF5(hdf5_file):
+def readSetupFromHDF5(hdf5_file: str):
     with h5py.File(hdf5_file, 'r') as file:
         # Accessing the first element and converting to scalar
         Re = file['Re'][()].item()
@@ -103,7 +103,7 @@ def readSetupFromHDF5(hdf5_file):
     return Re, NX, NY, LX, LY, L, U, nu, dx, dy, dt, T, obstacle, w_on, animation_on
 
 
-def readSolutionFromHDF5(hdf5_file):
+def readSolutionFromHDF5(hdf5_file: str):
     with h5py.File(hdf5_file, 'r') as file:
         # NX = int(file['NX'][()].item())
         # NY = int(file['NY'][()].item())
@@ -115,7 +115,7 @@ def readSolutionFromHDF5(hdf5_file):
     return t, u, v, w, p
 
 
-def set_data(folder_path):
+def set_data(folder_path: str):
     num_frames = get_num_frames(folder_path)
 
     times = []

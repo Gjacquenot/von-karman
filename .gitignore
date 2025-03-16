@@ -19,3 +19,6 @@
 **/.vscode/**
 **/__pycache__/**
 output/results/*
+
+# Compilation bin
+bin/*
