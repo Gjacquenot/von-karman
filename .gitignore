@@ -23,3 +23,8 @@ output/results/*
 # Compilation bin
 bin/*
 build/*
+# Genrated files
+*.vtkhdf
+*.hdf
+*.hdf5
+*.h5
