@@ -22,7 +22,7 @@ TARGET := main
 
 # Sources and objects
 SOURCES := $(wildcard $(SRC)/*.c) $(wildcard $(SRC)/*.cpp)
-OBJECTS := $(patsubst $(SRC)/%.cpp, $(BIN)/%.o, $(filter %.cpp, $(SOURCES))) $(patsubst $(SRC)/%.c, $(BIN)/%.o, $(filter %.c, $(SOURCES))) 
+OBJECTS := $(patsubst $(SRC)/%.cpp, $(BIN)/%.o, $(filter %.cpp, $(SOURCES))) $(patsubst $(SRC)/%.c, $(BIN)/%.o, $(filter %.c, $(SOURCES)))
 
 # Headers
 HEADERS := $(wildcard $(INCLUDE)/*.h) $(wildcard $(INCLUDE)/*.hpp)
@@ -42,3 +42,12 @@ $(BIN)/%.o: $(SRC)/%.c $(HEADERS)
 
 clean:
 	@rm -f $(BIN)/*.o $(BIN)/$(TARGET)
+	@rm -rf $(BIN)
+	@rm -rf build
+
+cmake: ## Build with CMake
+	@cmake -S . -B build
+	@cmake --build build
+	@cmake --install build
+	@mkdir -p output/results
+	# @cmake --build build --target clean

@@ -36,3 +36,16 @@ add_test(
   COMMAND ${CMAKE_BINARY_DIR}/von_karman
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
+
+
+####################
+# Define the executable
+add_executable(demo_vtkhdf vtkhdf5/main.cpp  vtkhdf5/vtkhdf5.cpp)
+
+# Link libraries
+target_link_libraries(demo_vtkhdf PRIVATE ${HDF5_CXX_LIBRARIES})
+
+# Ensure HDF5 is properly linked
+target_include_directories(demo_vtkhdf PRIVATE vtkhdf5)
+target_include_directories(demo_vtkhdf PRIVATE ${HDF5_INCLUDE_DIRS})
+target_link_directories(demo_vtkhdf PRIVATE ${HDF5_LIBRARY_DIRS})
