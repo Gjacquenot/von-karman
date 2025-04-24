@@ -86,6 +86,7 @@ VTKHDFWriter::~VTKHDFWriter() {
         H5::Attribute nsteps_attr = steps_group.createAttribute("NSteps", H5::PredType::NATIVE_INT, attr_dataspace);
         int nsteps = static_cast<int>(current_timestep);
         nsteps_attr.write(H5::PredType::NATIVE_INT, &nsteps);
+        std::cout << "NSteps attribute written successfully."<< nsteps << std::endl;
     } catch (H5::Exception &e) {
         std::cerr << "Error writing NSteps attribute: " << e.getDetailMsg() << std::endl;
     }
@@ -103,24 +104,30 @@ void VTKHDFWriter::writeTimestep(double time, const std::vector<double> &scalar_
     vector_dataset.extend(new_vector_dims);
 
     // Write time value
-    hsize_t time_start[1] = {current_timestep};
-    H5::DataSpace time_memspace(1, new_time_dims);
-    time_dataset.write(&time, H5::PredType::NATIVE_DOUBLE, time_memspace, time_dataset.getSpace());
+    double time_value[1] = {time};
+    hsize_t time_start[1] = {current_timestep}; // Start at the current timestep
+    hsize_t time_count[1] = {1}; // Write one time value
+    H5::DataSpace time_dataspace = time_dataset.getSpace(); // Get the dataspace of the time dataset
+    time_dataspace.selectHyperslab(H5S_SELECT_SET, time_count, time_start); // Select hyperslab for the current timestep
+    H5::DataSpace time_memspace(1, time_count); // Define memory space for the time value
+    time_dataset.write(time_value, H5::PredType::NATIVE_DOUBLE, time_memspace, time_dataspace);
 
     // Write scalar data
     hsize_t scalar_start[4] = {current_timestep, 0, 0, 0}; // Start at the current timestep
     hsize_t scalar_count[4] = {1, static_cast<hsize_t>(nz), static_cast<hsize_t>(ny), static_cast<hsize_t>(nx)}; // 3D grid dimensions
-    H5::DataSpace scalar_memspace(4, scalar_count); // Memory space for the 3D grid
     scalar_dataspace = scalar_dataset.getSpace(); // Update dataspace after extending the dataset
     scalar_dataspace.selectHyperslab(H5S_SELECT_SET, scalar_count, scalar_start); // Select hyperslab for the current timestep
+    // H5::DataSpace scalar_memspace(3, &scalar_count[1]); // Memory space for the 3D grid
+    H5::DataSpace scalar_memspace(4, scalar_count); // Memory space for the 3D grid
     scalar_dataset.write(scalar_data.data(), H5::PredType::NATIVE_DOUBLE, scalar_memspace, scalar_dataspace);
 
     // Write vector data
     hsize_t vector_start[5] = {current_timestep, 0, 0, 0, 0}; // Start at the current timestep
     hsize_t vector_count[5] = {1, static_cast<hsize_t>(nz), static_cast<hsize_t>(ny), static_cast<hsize_t>(nx), 3}; // 3D grid dimensions + vector components
-    H5::DataSpace vector_memspace(5, vector_count); // Memory space for the 3D grid with vector components
     vector_dataspace = vector_dataset.getSpace(); // Update dataspace after extending the dataset
     vector_dataspace.selectHyperslab(H5S_SELECT_SET, vector_count, vector_start); // Select hyperslab for the current timestep
+    // H5::DataSpace vector_memspace(4, &vector_count[1]); // Memory space for the 3D grid with vector components
+    H5::DataSpace vector_memspace(5, vector_count); // Memory space for the 3D grid with vector components
     vector_dataset.write(vector_data.data(), H5::PredType::NATIVE_DOUBLE, vector_memspace, vector_dataspace);
 
     // Increment timestep counter
