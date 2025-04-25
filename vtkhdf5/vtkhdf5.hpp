@@ -11,7 +11,8 @@ class AbstractVTKHDFWriter {
         AbstractVTKHDFWriter(const std::string& filename);
         virtual ~AbstractVTKHDFWriter();
         void write_timestep_data(double time);
-        virtual void write_timestep(double time, const std::vector<double> &scalar_data, const std::vector<double> &vector_data) = 0;
+        void write_timestep_vectors(double time, const std::vector<double> &scalar_data, const std::vector<double> &vector_data);
+        virtual void write_timestep(double time, const double * scalar_data, const double * vector_data) = 0;
     protected:
         H5::H5File file;
         H5::Group vtkhdf_group;
@@ -31,8 +32,7 @@ class VTKHDFWriter2D: public AbstractVTKHDFWriter {
             const std::array<double, 2> &dx_dy = {1.0, 1.0},
             const std::array<double, 2> & ox_oy = {0.0, 0.0});
         ~VTKHDFWriter2D() = default;
-        void write_timestep(double time, const std::vector<double> &scalar_data, const std::vector<double> &vector_data);
-
+        void write_timestep(double time, const double * scalar_data, const double * vector_data);
     private:
         int nx, ny;
         VTKHDFWriter2D();
@@ -45,7 +45,7 @@ class VTKHDFWriter3D: public AbstractVTKHDFWriter {
             const std::array<double, 3> &dx_dy_dz = {1.0, 1.0, 1.0},
             const std::array<double, 3> &ox_oy_oz = {0.0, 0.0, 0.0});
         ~VTKHDFWriter3D() = default;
-        void write_timestep(double time, const std::vector<double> &scalar_data, const std::vector<double> &vector_data);
+        void write_timestep(double time, const double * scalar_data, const double * vector_data);
 
     private:
         int nx, ny, nz;

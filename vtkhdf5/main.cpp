@@ -32,7 +32,7 @@ int demo_2d() {
         }
 
         // Write timestep
-        writer.write_timestep(time, scalar_data, vector_data);
+        writer.write_timestep_vectors(time, scalar_data, vector_data);
     }
 
     return 0;
@@ -65,7 +65,7 @@ int demo_3d() {
         }
 
         // Write timestep
-        writer.write_timestep(time, scalar_data, vector_data);
+        writer.write_timestep_vectors(time, scalar_data, vector_data);
     }
 
     return 0;

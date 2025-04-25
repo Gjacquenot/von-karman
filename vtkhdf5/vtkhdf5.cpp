@@ -40,6 +40,12 @@ AbstractVTKHDFWriter::AbstractVTKHDFWriter(const std::string &filename)
     time_dataset = steps_group.createDataSet("Values", H5::PredType::NATIVE_DOUBLE, time_dataspace, time_prop);
 }
 
+void AbstractVTKHDFWriter::write_timestep_vectors(double time, const std::vector<double> &scalar_data, const std::vector<double> &vector_data)
+{
+    write_timestep(time, &scalar_data[0], &vector_data[0]);
+}
+
+
 void AbstractVTKHDFWriter::write_timestep_data(double time)
 {
     // Extend datasets to accommodate the new timestep
@@ -119,7 +125,8 @@ VTKHDFWriter2D::VTKHDFWriter2D(const std::string &filename,
     vector_dataset = point_data_group.createDataSet("TemporalVectors", H5::PredType::NATIVE_DOUBLE, vector_dataspace, vector_prop);
 }
 
-void VTKHDFWriter2D::write_timestep(double time, const std::vector<double> &scalar_data, const std::vector<double> &vector_data) {
+void VTKHDFWriter2D::write_timestep(double time, const double * scalar_data, const double * vector_data)
+{
     write_timestep_data(time);
     hsize_t new_scalar_dims[3] = {current_timestep + 1, static_cast<hsize_t>(ny), static_cast<hsize_t>(nx)};
     scalar_dataset.extend(new_scalar_dims);
@@ -133,7 +140,7 @@ void VTKHDFWriter2D::write_timestep(double time, const std::vector<double> &scal
     scalar_dataspace = scalar_dataset.getSpace(); // Update dataspace after extending the dataset
     scalar_dataspace.selectHyperslab(H5S_SELECT_SET, scalar_count, scalar_start); // Select hyperslab for the current timestep
     H5::DataSpace scalar_memspace(3, scalar_count); // Memory space for the 3D grid
-    scalar_dataset.write(scalar_data.data(), H5::PredType::NATIVE_DOUBLE, scalar_memspace, scalar_dataspace);
+    scalar_dataset.write(scalar_data, H5::PredType::NATIVE_DOUBLE, scalar_memspace, scalar_dataspace);
 
     // Write vector data
     hsize_t vector_start[4] = {current_timestep, 0, 0, 0}; // Start at the current timestep
@@ -141,7 +148,7 @@ void VTKHDFWriter2D::write_timestep(double time, const std::vector<double> &scal
     vector_dataspace = vector_dataset.getSpace(); // Update dataspace after extending the dataset
     vector_dataspace.selectHyperslab(H5S_SELECT_SET, vector_count, vector_start); // Select hyperslab for the current timestep
     H5::DataSpace vector_memspace(4, vector_count); // Memory space for the 3D grid with vector components
-    vector_dataset.write(vector_data.data(), H5::PredType::NATIVE_DOUBLE, vector_memspace, vector_dataspace);
+    vector_dataset.write(vector_data, H5::PredType::NATIVE_DOUBLE, vector_memspace, vector_dataspace);
     // Increment timestep counter
     current_timestep++;
 }
@@ -191,7 +198,8 @@ VTKHDFWriter3D::VTKHDFWriter3D(const std::string &filename,
     vector_dataset = point_data_group.createDataSet("TemporalVectors", H5::PredType::NATIVE_DOUBLE, vector_dataspace, vector_prop);
 }
 
-void VTKHDFWriter3D::write_timestep(double time, const std::vector<double> &scalar_data, const std::vector<double> &vector_data) {
+void VTKHDFWriter3D::write_timestep(double time, const double * scalar_data, const double * vector_data)
+{
     write_timestep_data(time);
     hsize_t new_scalar_dims[4] = {current_timestep + 1, static_cast<hsize_t>(nz), static_cast<hsize_t>(ny), static_cast<hsize_t>(nx)};
     scalar_dataset.extend(new_scalar_dims);
@@ -205,7 +213,7 @@ void VTKHDFWriter3D::write_timestep(double time, const std::vector<double> &scal
     scalar_dataspace = scalar_dataset.getSpace(); // Update dataspace after extending the dataset
     scalar_dataspace.selectHyperslab(H5S_SELECT_SET, scalar_count, scalar_start); // Select hyperslab for the current timestep
     H5::DataSpace scalar_memspace(4, scalar_count); // Memory space for the 3D grid
-    scalar_dataset.write(scalar_data.data(), H5::PredType::NATIVE_DOUBLE, scalar_memspace, scalar_dataspace);
+    scalar_dataset.write(scalar_data, H5::PredType::NATIVE_DOUBLE, scalar_memspace, scalar_dataspace);
 
     // Write vector data
     hsize_t vector_start[5] = {current_timestep, 0, 0, 0, 0}; // Start at the current timestep
@@ -213,7 +221,7 @@ void VTKHDFWriter3D::write_timestep(double time, const std::vector<double> &scal
     vector_dataspace = vector_dataset.getSpace(); // Update dataspace after extending the dataset
     vector_dataspace.selectHyperslab(H5S_SELECT_SET, vector_count, vector_start); // Select hyperslab for the current timestep
     H5::DataSpace vector_memspace(5, vector_count); // Memory space for the 3D grid with vector components
-    vector_dataset.write(vector_data.data(), H5::PredType::NATIVE_DOUBLE, vector_memspace, vector_dataspace);
+    vector_dataset.write(vector_data, H5::PredType::NATIVE_DOUBLE, vector_memspace, vector_dataspace);
 
     // Increment timestep counter
     current_timestep++;
