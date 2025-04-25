@@ -72,10 +72,15 @@ AbstractVTKHDFWriter::~AbstractVTKHDFWriter()
     }
 }
 
-VTKHDFWriter2D::VTKHDFWriter2D(const std::string &filename, int nx, int ny): AbstractVTKHDFWriter(filename), nx(nx), ny(ny)
+
+VTKHDFWriter2D::VTKHDFWriter2D(const std::string &filename,
+    const std::array<int, 2> & nx_ny,
+    const std::array<double, 2> & dx_dy,
+    const std::array<double, 2> & ox_oy):
+    AbstractVTKHDFWriter(filename), nx(nx_ny[0]), ny(nx_ny[1])
 {
-    const double origin[3] = {0.0, 0.0, 0.0};
-    const double spacing[3] = {0.1, 0.1, 0.0};
+    const double origin[3] = {ox_oy[0], ox_oy[1], 0.0};
+    const double spacing[3] = {dx_dy[0], dx_dy[1], 0.0};
     const int extent[4] = {0, nx - 1, 0, ny - 1};
     const double direction[9] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
@@ -127,7 +132,6 @@ void VTKHDFWriter2D::write_timestep(double time, const std::vector<double> &scal
     hsize_t scalar_count[3] = {1, static_cast<hsize_t>(ny), static_cast<hsize_t>(nx)}; // 3D grid dimensions
     scalar_dataspace = scalar_dataset.getSpace(); // Update dataspace after extending the dataset
     scalar_dataspace.selectHyperslab(H5S_SELECT_SET, scalar_count, scalar_start); // Select hyperslab for the current timestep
-    // H5::DataSpace scalar_memspace(3, &scalar_count[1]); // Memory space for the 3D grid
     H5::DataSpace scalar_memspace(3, scalar_count); // Memory space for the 3D grid
     scalar_dataset.write(scalar_data.data(), H5::PredType::NATIVE_DOUBLE, scalar_memspace, scalar_dataspace);
 
@@ -142,15 +146,14 @@ void VTKHDFWriter2D::write_timestep(double time, const std::vector<double> &scal
     current_timestep++;
 }
 
-VTKHDFWriter2D::~VTKHDFWriter2D() {
-
-}
-
-
-VTKHDFWriter3D::VTKHDFWriter3D(const std::string &filename, int nx, int ny, int nz)
-    : AbstractVTKHDFWriter(filename), nx(nx), ny(ny), nz(nz) {
-    const double origin[3] = {0.0, 0.0, 0.0};
-    const double spacing[3] = {0.1, 0.1, 0.1};
+VTKHDFWriter3D::VTKHDFWriter3D(const std::string &filename,
+    const std::array<int, 3> & nx_ny_nz,
+    const std::array<double, 3> & dx_dy_dz,
+    const std::array<double, 3> & ox_oy_oz):
+    AbstractVTKHDFWriter(filename), nx(nx_ny_nz[0]), ny(nx_ny_nz[1]), nz(nx_ny_nz[2])
+{
+    const double origin[3] = {ox_oy_oz[0], ox_oy_oz[1], ox_oy_oz[2]};
+    const double spacing[3] = {dx_dy_dz[0], dx_dy_dz[1], dx_dy_dz[2]};
     const int extent[6] = {0, nx - 1, 0, ny - 1, 0, nz - 1};
     const double direction[9] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 
@@ -188,10 +191,6 @@ VTKHDFWriter3D::VTKHDFWriter3D(const std::string &filename, int nx, int ny, int 
     vector_dataset = point_data_group.createDataSet("TemporalVectors", H5::PredType::NATIVE_DOUBLE, vector_dataspace, vector_prop);
 }
 
-VTKHDFWriter3D::~VTKHDFWriter3D() {
-
-}
-
 void VTKHDFWriter3D::write_timestep(double time, const std::vector<double> &scalar_data, const std::vector<double> &vector_data) {
     write_timestep_data(time);
     hsize_t new_scalar_dims[4] = {current_timestep + 1, static_cast<hsize_t>(nz), static_cast<hsize_t>(ny), static_cast<hsize_t>(nx)};
@@ -205,7 +204,6 @@ void VTKHDFWriter3D::write_timestep(double time, const std::vector<double> &scal
     hsize_t scalar_count[4] = {1, static_cast<hsize_t>(nz), static_cast<hsize_t>(ny), static_cast<hsize_t>(nx)}; // 3D grid dimensions
     scalar_dataspace = scalar_dataset.getSpace(); // Update dataspace after extending the dataset
     scalar_dataspace.selectHyperslab(H5S_SELECT_SET, scalar_count, scalar_start); // Select hyperslab for the current timestep
-    // H5::DataSpace scalar_memspace(3, &scalar_count[1]); // Memory space for the 3D grid
     H5::DataSpace scalar_memspace(4, scalar_count); // Memory space for the 3D grid
     scalar_dataset.write(scalar_data.data(), H5::PredType::NATIVE_DOUBLE, scalar_memspace, scalar_dataspace);
 
@@ -214,7 +212,6 @@ void VTKHDFWriter3D::write_timestep(double time, const std::vector<double> &scal
     hsize_t vector_count[5] = {1, static_cast<hsize_t>(nz), static_cast<hsize_t>(ny), static_cast<hsize_t>(nx), 3}; // 3D grid dimensions + vector components
     vector_dataspace = vector_dataset.getSpace(); // Update dataspace after extending the dataset
     vector_dataspace.selectHyperslab(H5S_SELECT_SET, vector_count, vector_start); // Select hyperslab for the current timestep
-    // H5::DataSpace vector_memspace(4, &vector_count[1]); // Memory space for the 3D grid with vector components
     H5::DataSpace vector_memspace(5, vector_count); // Memory space for the 3D grid with vector components
     vector_dataset.write(vector_data.data(), H5::PredType::NATIVE_DOUBLE, vector_memspace, vector_dataspace);
 

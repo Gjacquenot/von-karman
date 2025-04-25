@@ -2,6 +2,7 @@
 #define VTKHDF_WRITER_HPP
 
 #include <H5Cpp.h>
+#include <array>
 #include <vector>
 #include <string>
 
@@ -25,8 +26,11 @@ class AbstractVTKHDFWriter {
 
 class VTKHDFWriter2D: public AbstractVTKHDFWriter {
     public:
-        VTKHDFWriter2D(const std::string &filename, int nx, int ny);
-        ~VTKHDFWriter2D();
+        VTKHDFWriter2D(const std::string &filename,
+            const std::array<int, 2> & nx_ny,
+            const std::array<double, 2> &dx_dy = {1.0, 1.0},
+            const std::array<double, 2> & ox_oy = {0.0, 0.0});
+        ~VTKHDFWriter2D() = default;
         void write_timestep(double time, const std::vector<double> &scalar_data, const std::vector<double> &vector_data);
 
     private:
@@ -36,8 +40,11 @@ class VTKHDFWriter2D: public AbstractVTKHDFWriter {
 
 class VTKHDFWriter3D: public AbstractVTKHDFWriter {
     public:
-        VTKHDFWriter3D(const std::string &filename, int nx, int ny, int nz);
-        ~VTKHDFWriter3D();
+        VTKHDFWriter3D(const std::string &filename,
+            const std::array<int, 3> & nx_ny_nz,
+            const std::array<double, 3> &dx_dy_dz = {1.0, 1.0, 1.0},
+            const std::array<double, 3> &ox_oy_oz = {0.0, 0.0, 0.0});
+        ~VTKHDFWriter3D() = default;
         void write_timestep(double time, const std::vector<double> &scalar_data, const std::vector<double> &vector_data);
 
     private:

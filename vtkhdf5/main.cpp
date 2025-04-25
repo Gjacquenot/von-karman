@@ -1,14 +1,13 @@
 #include "vtkhdf5.hpp"
-#include <vector>
+#include <array>
 #include <cmath>
+#include <vector>
 
 int demo_2d() {
     const int nx = 40, ny = 50;
 
-    // Initialize writer
-    VTKHDFWriter2D writer("vtk_output_temporal_cpp_2d.hdf", nx, ny);
-
-
+    const std::array<int, 2> dimensions({nx, ny});
+    VTKHDFWriter2D writer("vtk_output_temporal_cpp_2d.hdf", dimensions);
     // Simulate and write timesteps
     for (int t_idx = 0; t_idx < 51; ++t_idx) {
         double time = static_cast<double>(t_idx) * 10.0 / 50;
@@ -41,11 +40,9 @@ int demo_2d() {
 
 int demo_3d() {
     const int nx = 40, ny = 50, nz = 2; // 2D grid (nz = 1)
-
+    const std::array<int, 3> nx_ny_nz({nx, ny, nz});
     // Initialize writer
-    VTKHDFWriter3D writer("vtk_output_temporal_cpp_3d.hdf", nx, ny, nz);
-
-
+    VTKHDFWriter3D writer("vtk_output_temporal_cpp_3d.hdf", nx_ny_nz);
     // Simulate and write timesteps
     for (int t_idx = 0; t_idx < 51; ++t_idx) {
         double time = static_cast<double>(t_idx) * 10.0 / 50;
