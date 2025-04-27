@@ -1,3 +1,6 @@
+// g++ -std=c++11 main.cpp vtkhdf5.cpp -o demo -isystem /usr/include/hdf5/serial -L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5_cpp -lhdf5
+// Copyright: Guillaume Jacquenot
+// Licence: MIT
 #include "vtkhdf5.hpp"
 #include <array>
 #include <cmath>
