@@ -18,7 +18,7 @@ find_package(HDF5 REQUIRED COMPONENTS CXX)
 include_directories(${EIGEN3_INCLUDE_DIR} ${HDF5_INCLUDE_DIRS} include)
 
 # Source files
-set(SOURCES src/main.cpp src/NS.cpp)
+set(SOURCES src/main.cpp src/NS.cpp vtkhdf5/vtkhdf5.cpp)
 
 # Define the executable
 add_executable(von_karman ${SOURCES})
@@ -40,7 +40,7 @@ add_test(
 
 ####################
 # Define the executable
-add_executable(demo_vtkhdf vtkhdf5/main.cpp  vtkhdf5/vtkhdf5.cpp)
+add_executable(demo_vtkhdf vtkhdf5/main.cpp vtkhdf5/vtkhdf5.cpp)
 
 # Link libraries
 target_link_libraries(demo_vtkhdf PRIVATE ${HDF5_CXX_LIBRARIES})

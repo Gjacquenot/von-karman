@@ -12,6 +12,7 @@
 #include "../include/misc.hpp"
 #include "../include/object.hpp"
 #include "../include/write.hpp"
+#include "../vtkhdf5/vtkhdf5.hpp"
 
 using namespace Eigen;
 
@@ -176,6 +177,21 @@ int main(void) {
 
   saveSetupToHDF5(prm, object_type, vorticity, animation);
   saveDataToHDF5(plot_count, u, v, w, p, prm.NX, prm.NY, t);
+  const std::array<int, 2> dimensions({prm.NX, prm.NY});
+  VTKHDFWriter2D hdf5_writer("vtk_output_temporal_cpp_2d.hdf", dimensions);
+  std::vector<double> scalar_data(prm.NX * prm.NY);
+  std::vector<double> vector_data(prm.NX * prm.NY * 3);
+  int idx = 0;
+  for (int j = 0; j < prm.NY; ++j) {
+      for (int i = 0; i < prm.NX; ++i) {
+          scalar_data[idx] = P(i,j);
+          vector_data[3 * idx] = U(i,j);
+          vector_data[3 * idx + 1] = V(i,j);
+          vector_data[3 * idx + 2] = 0;
+          ++idx;
+  }
+  }
+  hdf5_writer.write_timestep_vectors(t, scalar_data, vector_data);
   plot_count++;
   END_TIMER();
   ADD_TIME_TO(total_files);
@@ -347,6 +363,19 @@ int main(void) {
       }
       set_vorticity(ustar, vstar, w, prm);
       saveDataToHDF5(plot_count, ustar, vstar, w, p, prm.NX, prm.NY, t);
+
+
+      idx=0;
+      for (int j = 0; j < prm.NY; ++j) {
+      for (int i = 0; i < prm.NX; ++i) {
+            scalar_data[idx] = W(i,j);
+            vector_data[3 * idx] = Ustar(i, j);
+            vector_data[3 * idx + 1] = Vstar(i, j);
+            vector_data[3 * idx + 2] = 0;
+            ++idx;
+        }
+        }
+        hdf5_writer.write_timestep_vectors(t, scalar_data, vector_data);
       plot_count++;
     }
 
