@@ -126,8 +126,7 @@ void saveDataToHDF5(uint plot_count,
     double const * const w,
     double const * const p,
     int Nx, int Ny, double t) {
-  string filename = "output/results/sol_";
-  filename = filename + to_string(plot_count) + ".h5";
+  string filename = "output/results/sol_" + to_string(plot_count) + ".h5";
   const H5std_string DATASET_NAMES[] = {"u", "v", "w", "p"};
   const H5std_string TIMESTAMP_NAME("t");
 
