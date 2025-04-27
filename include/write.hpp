@@ -120,8 +120,12 @@ void saveSetupToHDF5(const Prm &prm, const string &object_type,
 // @param Nx number of cells in the x direction (including ghost cells)
 // @param Ny number of cells in the y direction (including ghost cells)
 // @param t time
-void saveDataToHDF5(uint plot_count, double *u, double *v, double *w, double *p,
-                    int Nx, int Ny, double t) {
+void saveDataToHDF5(uint plot_count,
+    double const * const u,
+    double const * const v,
+    double const * const w,
+    double const * const p,
+    int Nx, int Ny, double t) {
   string filename = "output/results/sol_";
   filename = filename + to_string(plot_count) + ".h5";
   const H5std_string DATASET_NAMES[] = {"u", "v", "w", "p"};
@@ -133,7 +137,7 @@ void saveDataToHDF5(uint plot_count, double *u, double *v, double *w, double *p,
     DataSpace dataspace(2, dims);
 
     // Create and write datasets for u, v, w, p
-    double *datasets[] = {u, v, w, p};
+    double const * const datasets[] = {u, v, w, p};
     for (int i = 0; i < 4; i++) {
       DataSet dataset = file.createDataSet(DATASET_NAMES[i],
                                            PredType::NATIVE_DOUBLE, dataspace);

@@ -115,7 +115,7 @@ double interpolate(int i, int j, double *phi, const Prm &prm,
   return interp / total_weight;
 }
 
-void set_vorticity(double *u, double *v, double *w, const Prm &prm) {
+void set_vorticity(double const * const u, double const * const v, double * const w, const Prm &prm) {
   for (int i = 1; i < prm.NX - 1; i++) {
     for (int j = 1; j < prm.NY - 1; j++) {
       W(i, j) = (V(i + 1, j) - V(i - 1, j)) / (2 * prm.dx) -

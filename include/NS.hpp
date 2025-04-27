@@ -71,7 +71,7 @@ double interpolate(int i, int j, double *phi, const Prm &prm, Object &obstacle);
 // @param v velocity in y direction
 // @param w vorticity
 // @param prm parameters of the simulation (dx, dy, dt, etc.)
-void set_vorticity(double *u, double *v, double *w, const Prm &prm);
+void set_vorticity(double const * const u, double const * const v, double * const w, const Prm &prm);
 
 // @brief Build the Poisson matrix for the pressure Poisson equation poisson(p)
 // = div(u)
