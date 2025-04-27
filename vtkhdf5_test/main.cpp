@@ -1,18 +1,17 @@
 #include <vtkSmartPointer.h>
 #include <vtkHDFReader.h>
+#include <vtkImageData.h>
 #include <vtkProbeFilter.h>
 #include <vtkPolyData.h>
 #include <vtkPoints.h>
 #include <vtkPointData.h>
 #include <vtkDataArray.h>
-#include <vtkFloatArray.h>
-
 #include <vtkStreamingDemandDrivenPipeline.h>
 #include <vtkInformation.h>
 
-#include <array>
 #include <iostream>
 #include <vector>
+#include <array>
 #include <string>
 
 int main(int argc, char* argv[])
@@ -24,7 +23,39 @@ int main(int argc, char* argv[])
 
     std::string hdfFile = argv[1];
 
-    // Step 1: Define probe points
+    // Step 1: Read vtkHDF image data
+    auto reader = vtkSmartPointer<vtkHDFReader>::New();
+    reader->SetFileName(hdfFile.c_str());
+    reader->UpdateInformation();
+
+    // Get time steps
+    vtkInformation* info = reader->GetOutputInformation(0);
+    int numTimeSteps = info->Length(vtkStreamingDemandDrivenPipeline::TIME_STEPS());
+    std::cout << "Number of time steps = " << numTimeSteps << std::endl;
+    std::vector<double> timeSteps(numTimeSteps);
+    if (numTimeSteps > 0)
+    info->Get(vtkStreamingDemandDrivenPipeline::TIME_STEPS(), &timeSteps[0]);
+    for (int t = 0; t < numTimeSteps; ++t) {
+        std::cout << "t("<<t <<") "<< timeSteps[t] << std::endl;
+    }
+
+    // Read first timestep to get image metadata
+    if (numTimeSteps > 0)
+        reader->UpdateTimeStep(timeSteps[0]);
+    else
+        reader->Update();
+
+    vtkImageData* image = vtkImageData::SafeDownCast(reader->GetOutput());
+
+    double bounds[6];
+    image->GetBounds(bounds);
+
+    std::cout << "📦 Bounding box (world coordinates):\n";
+    std::cout << "  X: [" << bounds[0] << ", " << bounds[1] << "]\n";
+    std::cout << "  Y: [" << bounds[2] << ", " << bounds[3] << "]\n";
+    std::cout << "  Z: [" << bounds[4] << ", " << bounds[5] << "]\n";
+
+    // Optional: define some probe points
     auto points = vtkSmartPointer<vtkPoints>::New();
     points->InsertNextPoint(0.0, 0.0, 0.0);
     points->InsertNextPoint(1.0, 0.0, 0.0);
@@ -33,24 +64,11 @@ int main(int argc, char* argv[])
     probeInput->SetPoints(points);
     int numPoints = points->GetNumberOfPoints();
 
-    // Step 2: Set up HDF reader
-    auto reader = vtkSmartPointer<vtkHDFReader>::New();
-    reader->SetFileName(hdfFile.c_str());
-    reader->UpdateInformation(); // Load metadata to access time steps
-    vtkInformation* info = reader->GetOutputInformation(0);
-
-    int numTimeSteps = info->Length(vtkStreamingDemandDrivenPipeline::TIME_STEPS());
-    std::vector<double> timeSteps(numTimeSteps);
-    info->Get(vtkStreamingDemandDrivenPipeline::TIME_STEPS(), &timeSteps[0]);
-
-    // Container: allTimeStepData[time][point][component]
     std::vector<std::vector<std::array<double, 3>>> allTimeStepData(
         numTimeSteps, std::vector<std::array<double, 3>>(numPoints));
 
-    // Step 3: Loop over all time steps
     for (int t = 0; t < numTimeSteps; ++t) {
-        double currentTime = timeSteps[t];
-        reader->UpdateTimeStep(currentTime);
+        reader->UpdateTimeStep(timeSteps[t]);
         reader->Update();
 
         auto probe = vtkSmartPointer<vtkProbeFilter>::New();
@@ -58,27 +76,60 @@ int main(int argc, char* argv[])
         probe->SetSourceConnection(reader->GetOutputPort());
         probe->Update();
 
-        vtkDataArray* vecArray = probe->GetOutput()->GetPointData()->GetVectors("velocity");
+        vtkDataArray* vecArray = probe->GetOutput()->GetPointData()->GetVectors("TemporalVectors");
         if (!vecArray) {
-            std::cerr << "No velocity vector data found at timestep " << currentTime << std::endl;
+            std::cerr << "No 'velocity' vector data at t=" << timeSteps[t] << std::endl;
             continue;
         }
 
         for (int i = 0; i < numPoints; ++i) {
-            double vec[3];
-            vecArray->GetTuple(i, vec);
-            allTimeStepData[t][i] = {vec[0], vec[1], vec[2]};
+            double v[3];
+            vecArray->GetTuple(i, v);
+            allTimeStepData[t][i] = {v[0], v[1], v[2]};
         }
     }
 
-    // Step 4: Print collected vector values
+    // Display interpolated data
     for (int t = 0; t < numTimeSteps; ++t) {
-        std::cout << "Time " << timeSteps[t] << ":\n";
+        std::cout << "🕒 Time " << timeSteps[t] << ":\n";
         for (int i = 0; i < numPoints; ++i) {
             const auto& v = allTimeStepData[t][i];
             std::cout << "  Point " << i << ": (" << v[0] << ", " << v[1] << ", " << v[2] << ")\n";
         }
     }
+
+    // Set to a specific time step
+    size_t desiredIndex =10;
+    double time = timeSteps[desiredIndex];
+    reader->UpdateTimeStep(time);
+    reader->Update();
+
+    // Get output and cast safely
+    vtkImageData* image2 = vtkImageData::SafeDownCast(reader->GetOutput());
+    if (!image2) {
+        std::cerr << "Error: Output is not vtkImageData!" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // Get attribute from point data
+    // vtkDataArray* velocityArray = image2->GetPointData()->GetVectors("velocity");
+    vtkDataArray* velocityArray = image2->GetPointData()->GetVectors("TemporalVectors");
+    if (!velocityArray) {
+        std::cerr << "No 'velocity' array found!" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    vtkIdType numTuples = velocityArray->GetNumberOfTuples();
+    int numComponents = velocityArray->GetNumberOfComponents();
+
+    std::cout << "Dumping velocity vectors (" << numTuples << " points):\n";
+
+    for (vtkIdType i = 0; i < numTuples; ++i) {
+        double v[3];
+        velocityArray->GetTuple(i, v);
+        std::cout << "Point " << i << ": (" << v[0] << ", " << v[1] << ", " << v[2] << ")\n";
+    }
+
 
     return EXIT_SUCCESS;
 }
