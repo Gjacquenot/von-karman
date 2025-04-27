@@ -380,15 +380,15 @@ int main(void) {
             total_boundary);
 
   // free memory
-  delete[] u;
-  delete[] ustar;
-  delete[] v;
-  delete[] vstar;
-  delete[] w;
-  delete[] p;
-  delete[] adv_u;
-  delete[] adv_v;
-  delete obstacle;
+  if (u != nullptr) delete[] u; u=nullptr;
+  if (ustar!=nullptr) delete[] ustar; ustar=nullptr;
+  if (v!=nullptr) delete[] v; v=nullptr;
+  if (vstar!=nullptr) delete[] vstar; vstar=nullptr;
+  if (w!=nullptr) delete[] w; w=nullptr;
+  if (p!=nullptr) delete[] p; p=nullptr;
+  if (adv_u!=nullptr) delete[] adv_u; adv_u=nullptr;
+  if (adv_v!=nullptr) delete[] adv_v; adv_v=nullptr;
+  delete obstacle; obstacle=nullptr;
 
   return 0;
 }
