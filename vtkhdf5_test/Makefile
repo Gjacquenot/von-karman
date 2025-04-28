@@ -12,3 +12,8 @@ compile:
 	cmake .. && \
 	make && \
 	./ProbeHDFVelocity ../vtk_output_temporal_cpp_3d.hdf
+
+clean:
+	@rm -rf build
+	@rm -rf vtk_output_temporal_cpp_3d.hdf
+	@rm -rf vtk_output_temporal_cpp_3d.hdf5

@@ -51,3 +51,12 @@ cmake: ## Build with CMake
 	@cmake --install build
 	@mkdir -p output/results
 	# @cmake --build build --target clean
+
+archive: ## Create archive
+	@make --silent -C vtkhdf5 clean
+	@make --silent -C vtkhdf5_test clean
+	@rm -f src/vtk_output_temporal_cpp.hdf
+	@rm -rf src/__pycache__
+	@tar -czvf archive.tar.gz src include vtkhdf5 vtkhdf5_test Makefile
+	@echo "Archive created at archive.tar.gz"
+	@echo "To extract, use: tar -xzvf archive.tar.gz"

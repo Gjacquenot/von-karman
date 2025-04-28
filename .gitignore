@@ -28,3 +28,4 @@ build/*
 *.hdf
 *.hdf5
 *.h5
+archive.tar.gz
