@@ -13,6 +13,49 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <chrono>
+#include <iomanip>
+
+class Timer {
+public:
+    Timer() : start_time(std::chrono::steady_clock::now()) {}
+
+    void reset() {
+        start_time = std::chrono::steady_clock::now();
+    }
+
+    void stopAndDisplay(const std::string& label = "Elapsed time") const {
+        auto end_time = std::chrono::steady_clock::now();
+        auto duration = end_time - start_time;
+
+        auto us = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+        double value = us;
+        std::string unit = "μs";
+
+        if (value > 1000.0) {
+            value /= 1000.0;
+            unit = "ms";
+        }
+        if (value > 1000.0) {
+            value /= 1000.0;
+            unit = "s";
+        }
+        if (value > 60.0 && unit == "s") {
+            value /= 60.0;
+            unit = "min";
+        }
+        if (value > 60.0 && unit == "min") {
+            value /= 60.0;
+            unit = "h";
+        }
+
+        std::cout << label << ": " << std::fixed << std::setprecision(3) << value << " " << unit << '\n';
+    }
+
+private:
+    std::chrono::time_point<std::chrono::steady_clock> start_time;
+};
+
 
 int main(int argc, char* argv[])
 {
@@ -124,12 +167,13 @@ int main(int argc, char* argv[])
 
     std::cout << "Dumping velocity vectors (" << numTuples << " points):\n";
 
+    Timer timer;
+    double v[3];
     for (vtkIdType i = 0; i < numTuples; ++i) {
-        double v[3];
         velocityArray->GetTuple(i, v);
-        std::cout << "Point " << i << ": (" << v[0] << ", " << v[1] << ", " << v[2] << ")\n";
+        // std::cout << "Point " << i << ": (" << v[0] << ", " << v[1] << ", " << v[2] << ")\n";
     }
-
+    timer.stopAndDisplay("Total computation time");
 
     return EXIT_SUCCESS;
 }

@@ -33,3 +33,9 @@ add_executable(ProbeHDFVelocity main.cpp)
 
 # Link to VTK libraries
 target_link_libraries(ProbeHDFVelocity PRIVATE ${VTK_LIBRARIES})
+
+# Add executable
+add_executable(ProbeHDFVelocityDynamic main_class.cpp)
+
+# Link to VTK libraries
+target_link_libraries(ProbeHDFVelocityDynamic PRIVATE ${VTK_LIBRARIES})
