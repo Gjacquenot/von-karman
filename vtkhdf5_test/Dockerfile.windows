@@ -1,0 +1,33 @@
+FROM dockcross/windows-static-x64-posix@sha256:ee16eafbebb465d2aa17c254606c0f7727b7c1c28d8d3d9e7ac56859cf75970c
+
+ENV PATH_MINGW_LIBRARIES=/usr/src/mxe/usr/x86_64-w64-mingw32.static.posix/lib
+ENV PATH_MINGW_LIBRARIES_GCC=/usr/src/mxe/usr/lib/gcc/x86_64-w64-mingw32.static.posix/11.4.0
+ENV DEFAULT_DOCKCROSS_IMAGE=dockcross/windows-static-x64-posix
+
+RUN cd /usr/src/mxe \
+ && make TARGETS=x86_64-w64-mingw32.static.posix boost \
+ && rm -rf /usr/src/mxe/pkg/*
+
+WORKDIR /opt
+RUN wget https://github.com/Kitware/VTK/archive/refs/tags/v9.4.2.tar.gz && \
+    tar -xzf v9.4.2.tar.gz && \
+    rm v9.4.2.tar.gz
+
+WORKDIR /opt/VTK-9.4.2
+RUN mkdir build && cd build && \
+    cmake -G "Unix Makefiles" .. \
+    -D CMAKE_BUILD_TYPE=Release \
+    -D CMAKE_INSTALL_PREFIX=/opt/VTK_INSTALL \
+    -D VTK_BUILD_ALL_MODULES=OFF \
+    -D VTK_GROUP_ENABLE_Qt=NO \
+    -D VTK_MODULE_ENABLE_VTK_IOHDF=YES \
+    -D VTK_MODULE_ENABLE_VTK_IOImage=YES \
+    -D VTK_MODULE_ENABLE_VTK_CommonCore=YES \
+    -D VTK_MODULE_ENABLE_VTK_CommonDataModel=YES \
+    -D VTK_MODULE_ENABLE_VTK_FiltersCore=YES \
+    -D VTK_MODULE_ENABLE_VTK_FiltersGeneral=YES \
+    -D VTK_MODULE_ENABLE_VTK_FiltersSources=YES \
+    -D VTK_MODULE_ENABLE_VTK_IOGeometry=YES \
+    -D VTK_MODULE_ENABLE_VTK_FiltersPoints=YES \
+    -D VTK_MODULE_ENABLE_VTK_ImagingCore=YES
+RUN cd build && make install
